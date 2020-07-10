@@ -27,6 +27,7 @@ So, if a DNA sequence needs 12 bits to be represented, 16 will be used and the 4
 ## Header
 
 Ordered values in the header:
+* version: the file format version x.y where x is the first byten y the second (2 Bytes)
 * k: The kmer size (1 Byte)
 * encoding: ACGT encoding (2 bits/nucl - 1 Byte).
 For example the Byte 00101101 means that in the 2 bits encoding A=0, T=1, C=2, G=3.
@@ -35,6 +36,9 @@ The 4 values need to be different.
 Max have to be non zero.
 * data_size: The size of the data associated to each kmer (8 Bytes)
 This value can be 0 if you don't want to associate any piece of data.
+* free_size: The size of the next field in Bytes (4 Bytes)
+* free_block: A field for additional metadata. Only use it for basic metadata and user comments.
+If you need more sections, please contact us to extend the file format in a parsable way.
 
 ## Block
 
