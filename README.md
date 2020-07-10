@@ -8,9 +8,9 @@ For example, a count with a maximum of 255 can be store on a byte associated to 
 # Overwiew
 
 The file is composed of two sections:
-* **An header section**: It describes the different constant values.
+* **A header section**: It describes the different constant values.
 For example, it contains the k value and the size of kmer associated data.
-* **A content section**: The content section is a list of blocks of different sizes that contained a DNA sequence and the kmer data associated.
+* **A content section**: This section is a list of blocks of different sizes that contained a DNA sequence and the kmer data associated.
 Each block can contains more than one kmer in a compacted way.
 So for example with k=3, a block with ACTTG will represent the set of kmer {ACT, CTT, TTG}.
 
