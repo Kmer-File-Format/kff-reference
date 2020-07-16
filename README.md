@@ -68,3 +68,4 @@ It's using 2 bits / nucleotide with respect to the encoding set in the header.
 * nt_pos: A list of the non terminal used symbols and their positions in the raw sequence:
   * nt_id: Id of the nt used (1 Byte).
   * nt_pos: the position to insert it in the raw sequence (lg(max+k-1) bits).
+* data: The data linked to the kmers. If the completely extended sequence (after application of the non terminal extentions) is of size s, this array must be of size (s-k+1)\*data_size bits.
