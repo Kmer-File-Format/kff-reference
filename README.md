@@ -9,14 +9,11 @@ For example, a count with a maximum of 255 can be store on a byte associated to 
 
 The file is composed of two parts:
 * **A header**: It describes the different constant values.
-For example, it contains the k value and the size of kmer associated data.
+For example, it contains the file format version of the nucletide encoding.
 * **A content part**: It is composed of a list of sections.
-As described in the following parts, sections can be filled with raw data blocks or with grammar based blocks.
-In each case the blocks contain information on compacted kmers and their associated data.
-We say compacted kmers because more than one kmer can appear in a sequence.
-For example with k=3, a block with ACTTG will represent the set of kmer {ACT, CTT, TTG}.
-
-Need for a schema here
+As described in the following parts, there are multiple type of sections and most of them are representing sequences in different ways.
+Overlapping kmers are represented as compacted sequences to save space.
+For example with k=3, a sequence ACTTG will represent the set of kmer {ACT, CTT, TTG}.
 
 ## Byte multiple
 
@@ -26,8 +23,9 @@ So, if a DNA sequence needs 12 bits to be represented, 16 will be used and the 4
 
 # File header
 
+The file header define values that are shared by the whole file regardless of the kmer set.
 Some values as k are not defined in the header but in the global number declaration sections.
-In that way, if a multiple k value are used, the file can redefine it on the fly.
+In that way, if multiple k values are used, the file can redefine it on the fly.
 
 Ordered values in the header:
 * version: the file format version x.y where x is the first byte y the second (2 Bytes)
