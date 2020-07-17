@@ -26,46 +26,85 @@ So, if a DNA sequence needs 12 bits to be represented, 16 will be used and the 4
 
 # File header
 
+Some values as k are not defined in the header but in the global number declaration sections.
+In that way, if a multiple k value are used, the file can redefine it on the fly.
+
 Ordered values in the header:
 * version: the file format version x.y where x is the first byte y the second (2 Bytes)
-* k: The kmer size (1 Byte)
 * encoding: ACGT encoding (2 bits/nucl - 1 Byte).
 For example the Byte 00101101 means that in the 2 bits encoding A=0, T=1, C=2, G=3.
 The 4 values need to be different.
-* max: The maximum number of kmer allowed in one block (8 Bytes).
-Max have to be non zero.
-* data_size: The size of the data associated to each kmer (8 Bytes)
-This value can be 0 if you don't want to associate any piece of data.
 * free_size: The size of the next field in Bytes (4 Bytes)
 * free_block: A field for additional metadata. Only use it for basic metadata and user comments.
-If you need more sections, please contact us to extend the file format in a parsable way.
+If you need more section types, please contact us to extend the file format in a parsable and consistent way.
 
-# Section
+# Sections
 
-Ordered values in the section:
-* type: the type of section. 'r' for raw, 'g' for grammar (1 Byte).
-* If grammar block:
-  * nt: The number of non terminal symbols for this section (up to 256 different) (1 Byte)
-  * nt_blocks: Definition of the non terminal values.
-The first nt described here has the identifiyer 0, the second, 1, etc.
-* nb_blocks: the number of raw/grammar blocks that will follow in this section.
+The sections can of 4 different types that are global number definitions, raw data section, minimizer section or grammar section (not yet described).
+The first Byte of each section is a char to define the type (n, r, m or g respectively).
 
-# Raw Block
+## Global number declaration
 
-Each raw block is composed of 3 values:
-* n: The number of kmers stored in the block <= max (lg(max) bits (ceiled on a 8 multiple)).
+These sections can be seen as a zone of global scope variable definition.
+The numbers are pairs of name/value where names are plain text ended with a '\0' character and values are 64 bits numbers.
+For example, this section is used to define a minimizer size value that is used for the minimizer sections.
+A list of needed values for other sections is given in their documentation.
+
+Section values:
+* type: char 'n' (1 Byte)
+* nb_vars: The number of numbers declared in this section (8 Bytes).
+* vars: A succession of nb_vars number structures as follow:
+  * name: Plain text name ended with '\0' (variable size).
+  * value: 64 bits value (8 Bytes).
+
+## Raw genomic/data section
+
+These sections are representing compacted sequences of raw kmers and the data linked to them.
+Each sequence and its data are defined as a block.
+The sequences are represented in a compacted way with 2 bits per nucleotide.
+
+Global variable needed:
+* k: the kmer size for this section.
+* max: The maximum **number of kmer** per block.
+* data_size: The max size of a piece of data for one kmer.
+Can be 0 for "no data".
+
+Section values:
+* type: char 'r' (1 Byte)
+* nb_blocks: The number blocks in this section (4 Bytes).
+* blocks:
+  * n: The number of kmers stored in the block. Must be <= max (lg(max) bits).
 If max have been set to 1 in the header, this value is absent (save 1 Byte per block).
-* seq: The DNA sequence using 2 bits / nucleotide with respect to the encoding set in the header (with a padding to fill a Byte multiple)
-* data: An array of n\*data_size bits containing the data associated with each kmer (empty if data_size=0).
+  * seq: The DNA sequence using 2 bits / nucleotide with respect to the encoding set in the header. It must be composed of n+k-1 characters.
+  * data: An array of n\*data_size bits containing the data associated with each kmer (empty if data_size=0).
 
-# Grammar blocks
 
-Composition:
-* nb_t: The number of terminal characters in the block <= (max+k-1) (lg(max+k-1) bits (ceiled on a 8 multiple)).
-* seq: The raw DNA sequence without the characters encoded in the non terminal symbols.
-It's using 2 bits / nucleotide with respect to the encoding set in the header.
-* nb_nt: The number of non terminal used in the block (1 Byte).
-* nt_pos: A list of the non terminal used symbols and their positions in the raw sequence:
-  * nt_id: Id of the nt used (1 Byte).
-  * nt_pos: the position to insert it in the raw sequence (lg(max+k-1) bits).
-* data: The data linked to the kmers. If the completely extended sequence (after application of the non terminal extentions) is of size s, this array must be of size (s-k+1)\*data_size bits.
+## Minimizer section
+
+Most of the kmer technics take advantage of minimizers to partition the kmer space into smaller buckets.
+The minimizers are shared between multiple kmers/sequences ans we can take advantage of that to decrease space usage.
+This section represent a set of sequences that share the same minimizer.
+
+Global variable needed:
+* k: the kmer size for this section.
+* m: the minimizer size.
+* max: The maximum **size of a sequence** (without minimizer) per block.
+* data_size: The max size of a piece of data for one kmer.
+Can be 0 for "no data".
+
+Section values:
+* type: char 'm' (1 Byte)
+* mini: The sequence of the minimizer 2 bits/char (lg(m) bits).
+* nb_blocks: The number blocks in this section (4 Bytes).
+* blocks:
+  * n: The size of the sequence (without minimizer) stored in the block. Must be <= max (lg(max) bits).
+If max have been set to 1 in the header, this value is absent (save 1 Byte per block).
+  * m_idx: The index of the minimizer in the sequence (lg(max) bits).
+  * seq: The DNA sequence without the minimizer using 2 bits / nucleotide with respect to the encoding set in the header (with a padding to fill a Byte multiple). It must be composed of n+k-1-m characters.
+  * data: An array of n\*data_size bits containing the data associated with each kmer (empty if data_size=0).
+
+
+## Context free grammar section (not used yet)
+
+This section is still under intense reflection on how to represent it succinctly using advantage of genomic texts.
+If you have any suggestions or papers to read, please use the issues to tell us.
