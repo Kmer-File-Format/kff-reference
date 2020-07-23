@@ -1,7 +1,7 @@
 # KFF 1 - Kmer File Format v1
 
-This readme define a universal file format to store DNA kmers and their associate data.
-The associate data for a kmer can be everything if its size is constant from a kmer to another.
+This repository define a universal file format to store DNA kmers and their associated data.
+The associated data for a kmer can be everything if its size is constant from a kmer to another.
 For example, a count with a maximum of 255 can be store on a byte associated to each kmer.
 
 
@@ -12,6 +12,7 @@ The file is composed of two parts:
 For example, it contains the file format version of the nucletide encoding.
 * **A content part**: It is composed of a list of sections.
 As described in the following parts, there are multiple type of sections and most of them are representing sequences in different ways.
+Each representation have compaction advantages.
 Overlapping kmers are represented as compacted sequences to save space.
 For example with k=3, a sequence ACTTG will represent the set of kmer {ACT, CTT, TTG}.
 
@@ -27,7 +28,7 @@ The file header define values that are shared by the whole file regardless of th
 Some values as k are not defined in the header but in the global number declaration sections.
 In that way, if multiple k values are used, the file can redefine it on the fly.
 
-Ordered values in the header:
+List of the values needed in the header:
 * version: the file format version x.y where x is the first byte y the second (2 Bytes)
 * encoding: ACGT encoding (2 bits/nucl - 1 Byte).
 For example the Byte 00101101 means that in the 2 bits encoding A=0, T=1, C=2, G=3.
@@ -36,12 +37,22 @@ The 4 values need to be different.
 * free_block: A field for additional metadata. Only use it for basic metadata and user comments.
 If you need more section types, please contact us to extend the file format in a parsable and consistent way.
 
+Here is an example header:
+
+```
+0204          : Version number 2 x 1 Byte. Here version 2.4
+2d            : Encoding 0x2d == 0b00101101, so A=0, C=2, G=3, T=1
+0000000c      : 12 Bytes in the free section
+48656c6c6f20  : ascii -> "Hello "
+776f726c6421  : ascii -> "world!"
+```
+
 # Sections
 
 The sections can of 4 different types that are global number definitions, raw data section, minimizer section or grammar section (not yet described).
 The first Byte of each section is a char to define the type (n, r, m or g respectively).
 
-## Global number declaration
+## Global number declaration
 
 These sections can be seen as a zone of global scope variable definition.
 The numbers are pairs of name/value where names are plain text ended with a '\0' character and values are 64 bits numbers.
