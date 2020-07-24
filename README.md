@@ -56,7 +56,7 @@ Other sections are used to store sequences more efficiently than raw data sectio
 
 The first Byte of each section define its type.
 
-## Global variable declaration
+## Section: Global variable declaration
 
 This kind of section can be seen as a zone of global scope variable definition.
 The other sections need the definition of some variables (the k value for example).
@@ -84,7 +84,7 @@ Example:
 00000000 00000001 : data_size <- 1
 ```
 
-## Raw genomic/data section
+## Section: raw sequences
 
 These sections are representing compacted sequences of raw kmers and the data linked to them.
 Each sequence and its data are defined as a block.
@@ -106,7 +106,7 @@ If max have been set to 1 in the header, this value is absent (save 1 Byte per b
   * data: An array of n\*data_size bits containing the data associated with each kmer (empty if data_size=0).
 
 
-## Minimizer section
+## Section: sequences with minimizers 
 
 Most of the kmer technics take advantage of minimizers to partition the kmer space into smaller buckets.
 The minimizers are shared between multiple kmers/sequences ans we can take advantage of that to decrease space usage.
@@ -131,7 +131,7 @@ If max have been set to 1 in the header, this value is absent (save 1 Byte per b
   * data: An array of n\*data_size bits containing the data associated with each kmer (empty if data_size=0).
 
 
-## Context free grammar section (not used yet)
+## Section: sequences as context free grammar (not used yet)
 
 This section is still under intense reflection on how to represent it succinctly using advantage of genomic texts.
 If you have any suggestions or papers to read, please use the issues to tell us.
