@@ -37,34 +37,52 @@ The 4 values need to be different.
 * free_block: A field for additional metadata. Only use it for basic metadata and user comments.
 If you need more section types, please contact us to extend the file format in a parsable and consistent way.
 
-Here is an example header:
+Example:
 
 ```
-0204          : Version number 2 x 1 Byte. Here version 2.4
-2d            : Encoding 0x2d == 0b00101101, so A=0, C=2, G=3, T=1
-0000000c      : 12 Bytes in the free section
-48656c6c6f20  : ascii -> "Hello "
-776f726c6421  : ascii -> "world!"
+0204              : Version number 2 x 1 Byte. Here version 2.4
+2d                : Encoding 0x2d == 0b00101101, so A=0, C=2, G=3, T=1
+0000000c          : 12 Bytes in the free section
+48656c6c 6f20776f 
+726c6421          : ascii -> "Hello world!"
 ```
 
 # Sections
 
-The sections can of 4 different types that are global number definitions, raw data section, minimizer section or grammar section (not yet described).
-The first Byte of each section is a char to define the type (n, r, m or g respectively).
+The main part of the file is a succession of sections.
+These sections can be of different types.
+The most important two are the global declaration of variables and the raw data sections.
+Other sections are used to store sequences more efficiently than raw data sections in particular contexts.
 
-## Global number declaration
+The first Byte of each section define its type.
 
-These sections can be seen as a zone of global scope variable definition.
-The numbers are pairs of name/value where names are plain text ended with a '\0' character and values are 64 bits numbers.
-For example, this section is used to define a minimizer size value that is used for the minimizer sections.
+## Global variable declaration
+
+This kind of section can be seen as a zone of global scope variable definition.
+The other sections need the definition of some variables (the k value for example).
 A list of needed values for other sections is given in their documentation.
+The variables are pairs of name/value where names are ascii texts ended with a '\0' character and values are 64 bits fields.
 
 Section values:
-* type: char 'n' (1 Byte)
+* type: char 'v' (1 Byte)
 * nb_vars: The number of numbers declared in this section (8 Bytes).
 * vars: A succession of nb_vars number structures as follow:
   * name: Plain text name ended with '\0' (variable size).
   * value: 64 bits value (8 Bytes).
+
+Example:
+
+```
+76                : 'v' -> declare a global variable section
+00000000 00000003 : 2 variables following
+6b00              : ascii name "k"
+00000000 0000000A : k <- 10
+6d617800          : ascii name "max"
+00000000 00000003 : max <- 3
+64617461 5f73697a
+6500              : ascii name "data_size"
+00000000 00000001 : data_size <- 1
+```
 
 ## Raw genomic/data section
 
