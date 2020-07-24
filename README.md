@@ -126,11 +126,13 @@ Same example translated as a raw sequencesection:
 ```
 
 
-## Section: sequences with minimizers 
+## Section: sequences with minimizers
 
-Most of the kmer technics take advantage of minimizers to partition the kmer space into smaller buckets.
-The minimizers are shared between multiple kmers/sequences ans we can take advantage of that to decrease space usage.
-This section represent a set of sequences that share the same minimizer.
+In many applications, kmers are bins using minimizer technics.
+It means that a succession of kmers or superkmers share a common substring.
+In this file format, in the case where you know sets of sequences that share this kind of substring, you can use minimizer sections.
+The common minimizer is stored at the beginning of the section and deleted in the sequences.
+A index is joined to the sequences to recall the minimize position and be able to reconstruct all the kmers.
 
 Global variable needed:
 * k: the kmer size for this section.
@@ -143,7 +145,7 @@ Section values:
 * type: char 'm' (1 Byte)
 * mini: The sequence of the minimizer 2 bits/char (lg(m) bits).
 * nb_blocks: The number blocks in this section (4 Bytes).
-* blocks:
+* blocks: A list of blocks where each block is composed as follow:
   * n: The size of the sequence (without minimizer) stored in the block. Must be <= max (lg(max) bits).
 If max have been set to 1 in the header, this value is absent (save 1 Byte per block).
   * m_idx: The index of the minimizer in the sequence (lg(max) bits).
