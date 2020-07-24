@@ -52,11 +52,11 @@ Example:
 The main part of the file is a succession of sections.
 These sections can be of different types.
 The most important two are the global declaration of variables and the raw data sections.
-Other sections are used to store sequences more efficiently than raw data sections in particular contexts.
+Other sections are used in particular contexts to store sequences more efficiently than raw data sections.
 
 The first Byte of each section define its type.
 
-## Section: Global variable declaration
+## Section: global variable declaration
 
 This kind of section can be seen as a zone of global scope variable definition.
 The other sections need the definition of some variables (the k value for example).
@@ -66,7 +66,7 @@ The variables are pairs of name/value where names are ascii texts ended with a '
 Section values:
 * type: char 'v' (1 Byte)
 * nb_vars: The number of numbers declared in this section (8 Bytes).
-* vars: A succession of nb_vars number structures as follow:
+* vars: A succession of nb_vars number composed as follow:
   * name: Plain text name ended with '\0' (variable size).
   * value: 64 bits value (8 Bytes).
 
@@ -78,7 +78,7 @@ Example:
 6b00              : ascii name "k"
 00000000 0000000A : k <- 10
 6d617800          : ascii name "max"
-00000000 00000003 : max <- 3
+00000000 000000ff : max <- 255
 64617461 5f73697a
 6500              : ascii name "data_size"
 00000000 00000001 : data_size <- 1
@@ -86,11 +86,13 @@ Example:
 
 ## Section: raw sequences
 
-These sections are representing compacted sequences of raw kmers and the data linked to them.
-Each sequence and its data are defined as a block.
+This section is composed of a list of sequence/data pairs.
+A sequence S of size s represents a list of kmers of size n=s-k+1.
+The data linked to S is of size data_size * n.
+We call each of these pairs a block.
 The sequences are represented in a compacted way with 2 bits per nucleotide.
 
-Global variable needed:
+Global variable requierment:
 * k: the kmer size for this section.
 * max: The maximum **number of kmer** per block.
 * data_size: The max size of a piece of data for one kmer.
@@ -99,11 +101,29 @@ Can be 0 for "no data".
 Section values:
 * type: char 'r' (1 Byte)
 * nb_blocks: The number blocks in this section (4 Bytes).
-* blocks:
+* blocks: A list of blocks where each block is composed as follow:
   * n: The number of kmers stored in the block. Must be <= max (lg(max) bits).
 If max have been set to 1 in the header, this value is absent (save 1 Byte per block).
   * seq: The DNA sequence using 2 bits / nucleotide with respect to the encoding set in the header. It must be composed of n+k-1 characters.
   * data: An array of n\*data_size bits containing the data associated with each kmer (empty if data_size=0).
+
+Plain text example (k=10, max=255, data_size=1, A=0, C=2, G=3, T=1 (counts)):
+```
+ACTGAACTGATT [32, 47, 1] : sequence translation 0b001001110000100111000101 or 0x2709c5
+ATTTCAGCCG [12]          : sequence translation 0b00010101100011101011 or 0x158eb
+```
+
+Same example translated as a raw sequencesection:
+```
+72       : 'r' -> declare a raw sequences section
+00000002 : 2 blocks declared
+03       : block 1 - 3 kmers declared
+2709c5   : block 1 - sequence ACTGAACTGATT
+202f01   : block 1 - counters [32, 47, 1]
+01       : block 2 - 1 kmer declared
+0158eb   : block 2 - sequence ATTTCAGCCG
+0c       : block 2 - counter [12]
+```
 
 
 ## Section: sequences with minimizers 
