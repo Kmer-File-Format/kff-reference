@@ -107,7 +107,7 @@ If max have been set to 1 in the header, this value is absent (save 1 Byte per b
   * seq: The DNA sequence using 2 bits / nucleotide with respect to the encoding set in the header. It must be composed of n+k-1 characters.
   * data: An array of n\*data_size bits containing the data associated with each kmer (empty if data_size=0).
 
-Plain text example (k=10, max=255, data_size=1, A=0, C=2, G=3, T=1 (counts)):
+Plain text example (k=10, max=255, data_size=1 (counts), A=0, C=2, G=3, T=1):
 ```
 ACTGAACTGATT [32, 47, 1] : sequence translation 0b001001110000100111000101 or 0x2709c5
 ATTTCAGCCG [12]          : sequence translation 0b00010101100011101011 or 0x158eb
@@ -121,7 +121,7 @@ Same example translated as a raw sequence section:
 2709c5   : block 1 - sequence ACTGAACTGATT
 202f01   : block 1 - counters [32, 47, 1]
 01       : block 2 - 1 kmer declared
-0158eb   : block 2 - sequence ATTTCAGCCG
+0158eb   : block 2 - sequence ATTTCAGCCG (+4 bits padding)
 0c       : block 2 - counter [12]
 ```
 
@@ -152,7 +152,7 @@ If max have been set to 1 in the header, this value is absent (save 1 Byte per b
   * seq: The DNA sequence without the minimizer using 2 bits / nucleotide with respect to the encoding set in the header (with a padding to fill a Byte multiple). It must be composed of n+k-1-m characters.
   * data: An array of n\*data_size bits containing the data associated with each kmer (empty if data_size=0).
 
-Plain text example (k=10, m=8, max=255, data_size=1, A=0, C=2, G=3, T=1 (counts)):
+Plain text example (k=10, m=8, max=255, data_size=1 (counts), A=0, C=2, G=3, T=1):
 ```
 ACTAAACTGATT [32, 47, 1] : sequence translation 0b001001000000100111000101 or 0x2409c5
 AAACTGATCG [12]          : sequence translation 0b00000010011100011011 or 0x0271b
@@ -160,7 +160,7 @@ AAACTGATCG [12]          : sequence translation 0b00000010011100011011 or 0x0271
 
 Same example translated as a minimizer sequence section:
 ```
-72       : 'm' -> declare a raw sequences section
+6d       : 'm' -> declare a minimizer section
 0271     : minimizer AAACTGAT
 00000002 : 2 blocks declared
 06       : block 1 - 4 nucleotides declared
@@ -169,11 +169,11 @@ Same example translated as a minimizer sequence section:
 202f01   : block 1 - counters [32, 47, 1]
 01       : block 2 - 2 nucletides declared
 00       : block 2 - minimizer at index 0
-07       : block 2 - sequence CG (padded with 4 bits)
+07       : block 2 - sequence CG (+4 bits padding)
 0c       : block 2 - counter [12]
 ```
 
 ## Section: sequences as context free grammar (not used yet)
 
-This section is still under intense reflection on how to represent it succinctly using advantage of genomic texts.
-If you have any suggestions or papers to read, please use the issues to tell us.
+We would like to represent sequences as grammar to compact futher in some cases.
+This section is still under construction.
