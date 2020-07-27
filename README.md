@@ -109,20 +109,24 @@ If max have been set to 1 in the header, this value is absent (save 1 Byte per b
 
 Plain text example (k=10, max=255, data_size=1 (counts), A=0, C=2, G=3, T=1):
 ```
-ACTGAACTGATT [32, 47, 1] : sequence translation 0b001001110000100111000101 or 0x2709c5
-ATTTCAGCCG [12]          : sequence translation 0b00010101100011101011 or 0x158eb
+ACTAAACTGATT [32, 47, 1] : sequence translation 0b001001000000100111000101 or 0x2409c5
+AAACTGATCG [12]          : sequence translation 0b00000010011100011011 or 0x0271b
+CTAAACTGATT [1, 47]      : sequence translation 0b1001000000100111000101 or 0x2409c5
 ```
 
 Same example translated as a raw sequence section:
 ```
 72       : 'r' -> declare a raw sequences section
-00000002 : 2 blocks declared
+00000003 : 3 blocks declared
 03       : block 1 - 3 kmers declared
-2709c5   : block 1 - sequence ACTGAACTGATT
+2409c5   : block 1 - sequence ACTAAACTGATT
 202f01   : block 1 - counters [32, 47, 1]
 01       : block 2 - 1 kmer declared
-0158eb   : block 2 - sequence ATTTCAGCCG (+4 bits padding)
+00271b   : block 2 - sequence AAACTGATCG (+4 bits padding)
 0c       : block 2 - counter [12]
+02       : block 3 - 2 kmer declared
+2409c5   : block 3 - sequence CTAAACTGATT (+2 bits padding)
+012F     : block 3 - counters [1, 47]
 ```
 
 
@@ -146,32 +150,39 @@ Section values:
 * mini: The sequence of the minimizer 2 bits/char (lg(m) bits).
 * nb_blocks: The number blocks in this section (4 Bytes).
 * blocks: A list of blocks where each block is composed as follow:
-  * n: The size of the sequence (without minimizer) stored in the block. Must be <= max (lg(max) bits).
+  * n: The number of kmers stored in the block. Must be <= max (lg(max) bits).
 If max have been set to 1 in the header, this value is absent (save 1 Byte per block).
   * m_idx: The index of the minimizer in the sequence (lg(max) bits).
-  * seq: The DNA sequence without the minimizer using 2 bits / nucleotide with respect to the encoding set in the header (with a padding to fill a Byte multiple). It must be composed of n+k-1-m characters.
+  * seq: The DNA sequence without the minimizer using 2 bits / nucleotide with respect to the encoding set in the header (with a padding to fill a Byte multiple). It must be composed of n+k-1-m characters (2\*(n+k-1-m) bits).
   * data: An array of n\*data_size bits containing the data associated with each kmer (empty if data_size=0).
 
 Plain text example (k=10, m=8, max=255, data_size=1 (counts), A=0, C=2, G=3, T=1):
 ```
 ACTAAACTGATT [32, 47, 1] : sequence translation 0b001001000000100111000101 or 0x2409c5
 AAACTGATCG [12]          : sequence translation 0b00000010011100011011 or 0x0271b
+CTAAACTGATT [1, 47]      : sequence translation 0b1001000000100111000101 or 0x2409c5
 ```
 
 Same example translated as a minimizer sequence section:
 ```
 6d       : 'm' -> declare a minimizer section
 0271     : minimizer AAACTGAT
-00000002 : 2 blocks declared
-06       : block 1 - 4 nucleotides declared
+00000003 : 3 blocks declared
+03       : block 1 - 3 kmers declared
 03       : block 1 - minimizer at index 3
 25       : block 1 - sequence ACTT
 202f01   : block 1 - counters [32, 47, 1]
-01       : block 2 - 2 nucletides declared
+01       : block 2 - 1 kmer declared
 00       : block 2 - minimizer at index 0
 07       : block 2 - sequence CG (+4 bits padding)
 0c       : block 2 - counter [12]
+02       : block 3 - 2 kmers declared
+02       : block 3 - minimizer at index 2
+25       : block 3 - sequence CTT (+2 bits padding)
+012F     : block 3 - counters [1, 47]
 ```
+
+This small example have been reduced in size from 23 Bytes to 22 Bytes using minimizer blocks instead of raw blocks.
 
 ## Section: sequences as context free grammar (not used yet)
 
