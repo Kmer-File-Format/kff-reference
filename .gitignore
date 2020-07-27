@@ -6,3 +6,5 @@ Makefile
 *.bak
 
 kff_example
+test.kff
+kff_io.hpp
