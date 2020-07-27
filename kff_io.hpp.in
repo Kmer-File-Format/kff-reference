@@ -1,3 +1,4 @@
+#include <fstream>
 
 #ifndef KFF_IO
 #define KFF_IO
@@ -8,11 +9,21 @@
 
 
 class Kff_file {
+private:
+	bool is_writer;
+	bool is_reader;
+	std::fstream fs;
 public:
 	// encoding:       A  C  T  G
 	char encoding[4] = {0, 1, 3, 2};
 
+	// --- General functions ---
+	/* Open the file filename with the mode mode.
+	 * mode must be choose in the set of values {r: read, w: write}
+	 */
 	Kff_file(const char * filename, const char * mode);
+	/* Close the file */
+	void close();
 
 	// --- header functions ---
 	// void set_encoding(char a, char c, char g, char t);
