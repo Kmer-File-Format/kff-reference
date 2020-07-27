@@ -31,7 +31,7 @@ In that way, if multiple k values are used, the file can redefine it on the fly.
 List of the values needed in the header:
 * version: the file format version x.y where x is the first byte y the second (2 Bytes)
 * encoding: ACGT encoding (2 bits/nucl - 1 Byte).
-For example the Byte 00101101 means that in the 2 bits encoding A=0, T=1, C=2, G=3.
+For example the Byte 00101101 means that in the 2 bits encoding A=0, C=2, G=3, T=1.
 The 4 values need to be different.
 * free_size: The size of the next field in Bytes (4 Bytes)
 * free_block: A field for additional metadata. Only use it for basic metadata and user comments.
@@ -87,7 +87,7 @@ Example:
 ## Section: raw sequences
 
 This section is composed of a list of sequence/data pairs.
-A sequence S of size s represents a list of kmers of size n=s-k+1.
+A sequence S of size s represents a list of n kmers where n=s-k+1.
 The data linked to S is of size data_size * n.
 We call each of these pairs a block.
 The sequences are represented in a compacted way with 2 bits per nucleotide.
