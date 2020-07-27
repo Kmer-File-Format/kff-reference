@@ -141,7 +141,7 @@ A index is joined to the sequences to recall the minimize position and be able t
 Global variable needed:
 * k: the kmer size for this section.
 * m: the minimizer size.
-* max: The maximum **size of a sequence** (without minimizer) per block.
+* max: The maximum **number of kmer** per block.
 * data_size: The max size of a piece of data for one kmer.
 Can be 0 for "no data".
 
