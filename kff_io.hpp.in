@@ -20,6 +20,9 @@ private:
 public:
 	// encoding:           A  C  T  G
 	uint8_t encoding[4] = {0, 1, 3, 2};
+	uint64_t k_value = 0;
+	uint64_t data_size = 0;
+	uint64_t max_kmers = 255;
 
 	// --- General functions ---
 	/* Open the file filename with the mode mode.
@@ -34,13 +37,10 @@ public:
 	 * Only the two lower bits of each uint8_t will be used.
 	 * The 4 2-bits values must be diferent to each other.
 	 */
-	void set_encoding(uint8_t a, uint8_t c, uint8_t g, uint8_t t);
-	// void set_metadata(size_t size, char * data);
-	/* Jump to the beginning of the file and read the header.
-	 * The correct encoding is set in the corresponding attribute.
-	 * @return The metadata content.
-	 */
-	// string read_header();
+	void write_encoding(uint8_t a, uint8_t c, uint8_t g, uint8_t t);
+	void read_encoding();
+	void write_metadata(size_t size, char * data);
+	uint32_t read_metadata(char * data);
 
 	// --- general section ---
 	// char read_section_name();

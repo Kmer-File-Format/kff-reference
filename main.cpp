@@ -9,9 +9,13 @@ using namespace std;
 void encode_sequence(char * sequence, size_t size, uint8_t * encoded);
 
 int main(int argc, char * argv[]) {
+	// --- header writing ---
 	Kff_file file = Kff_file("test.kff", "w");
 	// Set encoding   A  C  G  T
-	file.set_encoding(0, 1, 3, 2);
+	file.write_encoding(0, 1, 3, 2);
+	// Set metadata
+	file.write_metadata(11, "D@rK W@99ic");
+
 	// 2-bit sequence encoder
 	uint8_t encoded[1024];
 	encode_sequence("GGATGGGGG", 6, encoded);
@@ -19,7 +23,15 @@ int main(int argc, char * argv[]) {
 	// Close and end writing of the file.
 	file.close();
 
+
+
 	file = Kff_file("test.kff", "r");
+	file.read_encoding();
+	cout << (uint64_t)file.encoding[0] << " " << (uint64_t)file.encoding[1] << " " << (uint64_t)file.encoding[2] << " " << (uint64_t)file.encoding[3] << endl;
+	char metadata[1024];
+	uint32_t size = file.read_metadata(metadata);
+	metadata[size] = '\0';
+	cout << metadata << endl;
 	file.close();
 
 }
