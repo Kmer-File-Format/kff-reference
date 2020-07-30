@@ -1,9 +1,22 @@
 #include <iostream>
 #include <cassert>
+#include <sstream>
 
 #include "kff_io.hpp"
 
 using namespace std;
+
+
+// Utils
+
+template<typename T>
+void write_value(T val, fstream & fs) {
+	fs.write((char*)&val, sizeof(T));
+}
+template<typename T>
+void read_value(T & val, fstream & fs) {
+	fs.read((char*)&val, sizeof(T));
+}
 
 
 // ----- Open / Close functions -----
@@ -97,19 +110,99 @@ void Kff_file::read_encoding() {
 	assert(g != t);
 }
 
-void Kff_file::write_metadata(size_t size, char * data) {
-	this->fs << (uint32_t)size;
+void Kff_file::write_metadata(uint32_t size, char * data) {
+	write_value(size, fs);
 	this->fs.write(data, size);
 }
 
-uint32_t Kff_file::read_metadata(char * data) {
+uint32_t Kff_file::size_metadata() {
 	uint32_t meta_size;
-	this->fs >> meta_size;
-
-	this->fs.read(data, meta_size);
-
+	read_value(meta_size, fs);
 	return meta_size;
 }
+
+void Kff_file::read_metadata(uint32_t size, char * data) {
+	this->fs.read(data, size);
+}
+
+
+// ----- Sections -----
+
+char Kff_file::read_section_type() {
+	char type;
+	this->fs >> type;
+	this->fs.seekp(this->fs.tellp() - 1l);
+	return type;
+}
+
+
+// ----- Global variables sections -----
+
+Section_GV Kff_file::open_section_GV() {
+	return Section_GV(this);
+}
+
+Section_GV::Section_GV(Kff_file * file) {
+	this->file = file;
+	this->begining = file->fs.tellp();
+	this->nb_vars = 0;
+
+	if (file->is_reader) {
+		this->read_section();
+	}
+
+	if (file->is_writer) {
+		fstream & fs = file->fs;
+		fs << 'v';
+		write_value(nb_vars, fs);
+	}
+}
+
+void Section_GV::write_var(const string & var_name, uint64_t value) {
+	auto & fs = this->file->fs;
+	fs << var_name << '\0';
+	write_value(value, fs);
+}
+
+void Section_GV::read_section() {
+	char type;
+	file->fs >> type;
+	assert(type == 'v');
+
+	file->fs >> this->nb_vars;
+	for (auto i=0 ; i<nb_vars ; i++) {
+		this->read_var();
+	}
+}
+
+void Section_GV::read_var() {
+	// Name reading
+	stringstream ss;
+	char c;
+	do {
+		this->file->fs >> c;
+		ss << c;
+	} while (c != '\0');
+	
+	// Value reading
+	uint64_t value;
+	this->file->fs >> value;
+
+	// Saving
+	this->vars[ss.str()] = value;
+}
+
+void Section_GV::close() {
+	// Save current position
+	fstream &	 fs = this->file->fs;
+	long position = fs.tellp();
+	// Go write the number of variables in the correct place
+	fs.seekp(this->begining + 1);
+	write_value(nb_vars, fs);
+	fs.seekp(position);
+}
+
+
 
 
 

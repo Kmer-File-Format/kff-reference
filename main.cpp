@@ -16,23 +16,40 @@ int main(int argc, char * argv[]) {
 	// Set metadata
 	file.write_metadata(11, "D@rK W@99ic");
 
+	// --- global variable write ---
+
+	// Set global variables
+	auto section = file.open_section_GV();
+	section.write_var("k", 10);
+	section.write_var("max", 255);
+	section.write_var("data_size", 1);
+	section.close();
+
 	// 2-bit sequence encoder
-	uint8_t encoded[1024];
-	encode_sequence("GGATGGGGG", 6, encoded);
-	cout << (uint64_t)encoded[0] << " " << (uint64_t)encoded[1] << endl;
+	// uint8_t encoded[1024];
+	// encode_sequence("GGATGGGGG", 6, encoded);
+	// cout << (uint64_t)encoded[0] << " " << (uint64_t)encoded[1] << endl;
+
 	// Close and end writing of the file.
 	file.close();
 
 
 
+	// --- header reading ---
 	file = Kff_file("test.kff", "r");
 	file.read_encoding();
 	cout << (uint64_t)file.encoding[0] << " " << (uint64_t)file.encoding[1] << " " << (uint64_t)file.encoding[2] << " " << (uint64_t)file.encoding[3] << endl;
 	char metadata[1024];
-	uint32_t size = file.read_metadata(metadata);
+	uint32_t size = file.size_metadata();
+	file.read_metadata(size, metadata);
 	metadata[size] = '\0';
 	cout << metadata << endl;
-	file.close();
+
+	// // --- Global variable read ---
+	// cout << "New section: " << file.read_section_type() << endl;
+
+
+	// file.close();
 
 }
 
