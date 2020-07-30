@@ -162,6 +162,7 @@ void Section_GV::write_var(const string & var_name, uint64_t value) {
 	auto & fs = this->file->fs;
 	fs << var_name << '\0';
 	write_value(value, fs);
+	this->nb_vars += 1;
 }
 
 void Section_GV::read_section() {
@@ -169,7 +170,7 @@ void Section_GV::read_section() {
 	file->fs >> type;
 	assert(type == 'v');
 
-	file->fs >> this->nb_vars;
+	read_value(this->nb_vars, file->fs);
 	for (auto i=0 ; i<nb_vars ; i++) {
 		this->read_var();
 	}
@@ -186,7 +187,7 @@ void Section_GV::read_var() {
 	
 	// Value reading
 	uint64_t value;
-	this->file->fs >> value;
+	read_value(value, file->fs);
 
 	// Saving
 	this->vars[ss.str()] = value;

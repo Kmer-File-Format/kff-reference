@@ -19,11 +19,11 @@ int main(int argc, char * argv[]) {
 	// --- global variable write ---
 
 	// Set global variables
-	auto section = file.open_section_GV();
-	section.write_var("k", 10);
-	section.write_var("max", 255);
-	section.write_var("data_size", 1);
-	section.close();
+	Section_GV sgv = file.open_section_GV();
+	sgv.write_var("k", 10);
+	sgv.write_var("max", 255);
+	sgv.write_var("data_size", 1);
+	sgv.close();
 
 	// 2-bit sequence encoder
 	// uint8_t encoded[1024];
@@ -46,8 +46,12 @@ int main(int argc, char * argv[]) {
 	cout << metadata << endl;
 
 	// // --- Global variable read ---
-	// cout << "New section: " << file.read_section_type() << endl;
-
+	char section_name = file.read_section_type();
+	cout << "New section: " << section_name << endl;
+	sgv = file.open_section_GV();
+	for (auto & elem : sgv.vars) {
+		cout << elem.first << " = " << elem.second << endl;
+	}
 
 	// file.close();
 
