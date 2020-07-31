@@ -3,6 +3,8 @@
 #include <sstream>
 #include <math.h>
 
+#include <map>
+
 #include "kff_io.hpp"
 
 using namespace std;
@@ -186,11 +188,12 @@ void Section_GV::read_var() {
 	// Name reading
 	stringstream ss;
 	char c = 'o';
+	this->file->fs >> c;
 	while (c != '\0') {
-		this->file->fs >> c;
 		ss << c;
+		this->file->fs >> c;
 	}
-	
+
 	// Value reading
 	uint64_t value;
 	read_value(value, file->fs);
@@ -215,14 +218,10 @@ void Section_GV::close() {
 // ----- Raw sequence section -----
 
 Section_Raw Kff_file::open_section_raw() {
-	for (auto n : this->global_vars) {
-		cout << "intern: " << this->global_vars["k"] << endl;
-		cout << n.first << " " << (this->global_vars.find("k") != this->global_vars.end() ? "Trouvé" : "KO") << "  "  << endl;
-	}
-	assert(global_vars.find("k") != global_vars.end());
-	assert(global_vars.find("max") != global_vars.end());
-	assert(global_vars.find("data_size") != global_vars.end());
-	return Section_Raw(this, global_vars["k"], global_vars["max"], global_vars["data_size"]);
+	assert(this->global_vars.find("k") != this->global_vars.end());
+	assert(this->global_vars.find("max") != this->global_vars.end());
+	assert(this->global_vars.find("data_size") != this->global_vars.end());
+	return Section_Raw(this, this->global_vars["k"], this->global_vars["max"], this->global_vars["data_size"]);
 }
 
 Section_Raw::Section_Raw(Kff_file * file, uint64_t k, uint64_t max, uint64_t data_size) {

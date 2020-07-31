@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cassert>
+#include <sstream>
 
 #include "kff_io.hpp"
 
@@ -48,15 +49,10 @@ int main(int argc, char * argv[]) {
 	// --- Global variable read ---
 	char section_name = file.read_section_type();
 	sgv = file.open_section_GV();
-	for (auto & elem : file.global_vars) {
-		cout << elem.first << " = " << elem.second << endl;
-	}
 
-	// --- Read Raw Block ---
-	cout << endl;
-	cout << "extern: " << file.global_vars["k"] << endl;
+	// // --- Read Raw Block ---
 	sr = file.open_section_raw();
-	// cout << sr.nb_blocks << endl;
+	// // cout << sr.nb_blocks << endl;
 
 	file.close();
 
