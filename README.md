@@ -22,11 +22,40 @@ To be fast to read and write, all the values are stored on multiple of 8 bits to
 So, if a DNA sequence needs 12 bits to be represented, 16 will be used and the 4 most significant bits will be set randomly.
 
 
+## Convention
+
+In the diagrams below, a box like this:
+```
+     +---+
+     |   | <-- the vertical bars might be missing
+     +---+
+```
+represents one byte; a box like this:
+```
+    +==============+
+    |              |
+    +==============+
+```
+represents a variable number of bytes.
+
+A text like this:
+```
+ascii(Hello wordl!)
+```
+repersents the ascii value correspond to text "Hello word!" plus terminator caractere
+
+A text like this:
+```
+2bit(ACTG)
+```
+repersents the sequence ACTG in 2 bit encoding describe in header
+
 # File header
 
 The file header define values that are shared by the whole file regardless of the kmer set.
 Some values as k are not defined in the header but in the global number declaration sections.
 In that way, if multiple k values are used, the file can redefine it on the fly.
+
 
 List of the values needed in the header:
 * version: the file format version x.y where x is the first byte y the second (2 Bytes)
@@ -37,16 +66,24 @@ The 4 values need to be different.
 * free_block: A field for additional metadata. Only use it for basic metadata and user comments.
 If you need more section types, please contact us to extend the file format in a parsable and consistent way.
 
+```
++---------------+---------------+----------+--+--+--+--+============+
+| Major version | Minor version | Encoding | Free size | Free block |
++---------------+---------------+----------+--+--+--+--+============+
+```
+
 Example:
-
 ```
-0204              : Version number 2 x 1 Byte. Here version 2.4
-2d                : Encoding 0x2d == 0b00101101, so A=0, C=2, G=3, T=1
-0000000c          : 12 Bytes in the free section
-48656c6c 6f20776f 
-726c6421          : ascii -> "Hello world!"
++----+----+----+--+--+--+--+=====================+
+| 02 | 04 | 2d | 0000000c  | ascii(Hello wordl!) |
++----+----+----+--+--+--+--+=====================+
 ```
 
+* Version number is 2.4
+* Encoding 0x2d == 0b00101101, so A=0, C=2, G=3, T=1
+* 12 Bytes in the free section
+* ascii -> "Hello world!"
+`
 # Sections
 
 The main part of the file is a succession of sections.
@@ -70,19 +107,28 @@ Section values:
   * name: Plain text name ended with '\0' (variable size).
   * value: 64 bits value (8 Bytes).
 
+```
++-------+--+--+--+--+--+--+--+--+===========+--+--+--+--+--+--+--+--+===+============+--+--+--+--+--+--+--+--+
+| type  |         nb_vars       | name var1 |       value var1      | … | name var X |      value var X      |
++-------+--+--+--+--+--+--+--+--+===========+--+--+--+--+--+--+--+--+===+============+--+--+--+--+--+--+--+--+
+```
+
 Example:
 
 ```
-76                : 'v' -> declare a global variable section
-00000000 00000003 : 2 variables following
-6b00              : ascii name "k"
-00000000 0000000A : k <- 10
-6d617800          : ascii name "max"
-00000000 000000ff : max <- 255
-64617461 5f73697a
-6500              : ascii name "data_size"
-00000000 00000001 : data_size <- 1
++----------+--+--+--+--+--+--+--+--+==========+--+--+--+--+--+--+--+--+============+--+--+--+--+--+--+--+--+==================+--+--+--+--+--+--+--+--+
+| ascii(v) |             3         | ascii(k) |          A            | ascii(max) |           ff          | ascii(data_size) |             1         |
++----------+--+--+--+--+--+--+--+--+==========+--+--+--+--+--+--+--+--+============+--+--+--+--+--+--+--+--+==================+--+--+--+--+--+--+--+--+
 ```
+
+* ascii(v) -> declare a globad variable section
+* 3 -> declare 3 variable
+  * ascii(k) -> name var 1
+  * 10 -> value of variable k
+  * ascii(max) -> name var2
+  * 255 -> value of variable max
+  * ascii(data_size) ->  name var3
+  * 1 -> value of variable data_size
 
 ## Section: raw sequences
 
@@ -116,18 +162,22 @@ CTAAACTGATT [1, 47]      : sequence translation 0b1001000000100111000101 or 0x24
 
 Same example translated as a raw sequence section:
 ```
-72       : 'r' -> declare a raw sequences section
-00000003 : 3 blocks declared
-03       : block 1 - 3 kmers declared
-2409c5   : block 1 - sequence ACTAAACTGATT
-202f01   : block 1 - counters [32, 47, 1]
-01       : block 2 - 1 kmer declared
-00271b   : block 2 - sequence AAACTGATCG (+4 bits padding)
-0c       : block 2 - counter [12]
-02       : block 3 - 2 kmer declared
-2409c5   : block 3 - sequence CTAAACTGATT (+2 bits padding)
-012F     : block 3 - counters [1, 47]
++----------+--+--+--+--+---+===+====================+========+---+====================+====+---+===================+===========+
+| ascii(r) |      3        | 3 | 2bit(ACTAAACTGATT) | 202f01 | 1 | 2bit(AAACTGATCG)   | 0c | 2 | 2bit(CTAAACTGATT) |    012f   |
++----------+--+--+--+--+---+===+====================+========+---+====================+====+---+===================+===========+
 ```
+
+* ascii(r) -> declare a raw sequences section
+* 3 blocks declared:
+  * 3: block 1 - 3 kmers declared
+  * 2bit(ACTAAACTGATT): block 1 - sequence ACTAAACTGATT
+  * 202f01: block 1 - counters [32, 47, 1]
+  * 1: block 2 - 1 kmers declared
+  * 2bit(AAACTGATCG): block 2 - sequence AAACTGATCG (+4 bits padding)
+  * 0c: block 2 - counters [12]
+  * 2: block 3 - 2 kmers declared
+  * 2bit(CTAAACTGATT): block 3 - sequence CTAAACTGATT (+2 bits padding)
+  * 012f: block 3 - counters [1, 47]
 
 
 ## Section: sequences with minimizers
@@ -165,22 +215,26 @@ CTAAACTGATT [1, 47]      : sequence translation 0b1001000000100111000101 or 0x24
 
 Same example translated as a minimizer sequence section:
 ```
-6d       : 'm' -> declare a minimizer section
-0271     : minimizer AAACTGAT
-00000003 : 3 blocks declared
-03       : block 1 - 3 kmers declared
-03       : block 1 - minimizer at index 3
-25       : block 1 - sequence ACTT
-202f01   : block 1 - counters [32, 47, 1]
-01       : block 2 - 1 kmer declared
-00       : block 2 - minimizer at index 0
-07       : block 2 - sequence CG (+4 bits padding)
-0c       : block 2 - counter [12]
-02       : block 3 - 2 kmers declared
-02       : block 3 - minimizer at index 2
-25       : block 3 - sequence CTT (+2 bits padding)
-012F     : block 3 - counters [1, 47]
++----------+================+--+--+--+--+--+===+===+============+========+===+===+==========+====+===+===+===========+======+
+| ascii(m) | 2bit(AAACTGAT) |       3      | 3 | 3 | 2bit(ACTT) | 202f01 | 1 | 0 | 2bit(CG) | 0c | 2 | 2 | 2bit(CTT) | 012f |
++----------+================+--+--+--+--+--+===+===+============+========+===+===+==========+====+===+===+===========+======+
 ```
+
+* ascii(m) -> declare a minimizer section
+* 2bit(AACTGAT) -> minimizer of this block is AACTGAT
+* 3 blocks declared:
+  * 3: block 1 - 3 kmers declared
+  * 3: block 1 - minimizer at index 3
+  * 2bit(ACTT): block 1 - blocks sequence without minimizer
+  * 202f01: block 1 - counters [32, 47, 1]
+  * 1: block 2 - 1 kmers declared
+  * 0: block 2 - minimizer at index 0
+  * 2bit(CG): block 2 - blocks sequence without minimizer
+  * 0c: block 2 - counters [12]
+  * 2: block 3 - 2 kmers declared
+  * 2: block 3 - minimizer at index 2
+  * 2bit(CTT): block 3 - blocks sequence without minimizer
+  * 012f: block 3 - counters [1, 47]
 
 This small example have been reduced in size from 23 Bytes to 22 Bytes using minimizer blocks instead of raw blocks.
 
