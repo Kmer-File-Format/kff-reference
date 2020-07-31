@@ -25,10 +25,13 @@ int main(int argc, char * argv[]) {
 	sgv.write_var("data_size", 1);
 	sgv.close();
 
+	// Write a raw sequence bloc
+	Section_Raw sr = file.open_section_raw();
 	// 2-bit sequence encoder
-	// uint8_t encoded[1024];
-	// encode_sequence("GGATGGGGG", 6, encoded);
-	// cout << (uint64_t)encoded[0] << " " << (uint64_t)encoded[1] << endl;
+	uint8_t encoded[1024];
+	encode_sequence("ACTAAACTGATT", 12, encoded);
+	sr.write_compacted_sequence(encoded, 12, encoded);
+	sr.close();
 
 	// Close and end writing of the file.
 	file.close();
@@ -38,22 +41,24 @@ int main(int argc, char * argv[]) {
 	// --- header reading ---
 	file = Kff_file("test.kff", "r");
 	file.read_encoding();
-	cout << (uint64_t)file.encoding[0] << " " << (uint64_t)file.encoding[1] << " " << (uint64_t)file.encoding[2] << " " << (uint64_t)file.encoding[3] << endl;
 	char metadata[1024];
 	uint32_t size = file.size_metadata();
 	file.read_metadata(size, metadata);
-	metadata[size] = '\0';
-	cout << metadata << endl;
 
-	// // --- Global variable read ---
+	// --- Global variable read ---
 	char section_name = file.read_section_type();
-	cout << "New section: " << section_name << endl;
 	sgv = file.open_section_GV();
-	for (auto & elem : sgv.vars) {
+	for (auto & elem : file.global_vars) {
 		cout << elem.first << " = " << elem.second << endl;
 	}
 
-	// file.close();
+	// --- Read Raw Block ---
+	cout << endl;
+	cout << "extern: " << file.global_vars["k"] << endl;
+	sr = file.open_section_raw();
+	// cout << sr.nb_blocks << endl;
+
+	file.close();
 
 }
 

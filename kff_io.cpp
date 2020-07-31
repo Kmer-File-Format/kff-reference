@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cassert>
 #include <sstream>
+#include <math.h>
 
 #include "kff_io.hpp"
 
@@ -16,6 +17,10 @@ void write_value(T val, fstream & fs) {
 template<typename T>
 void read_value(T & val, fstream & fs) {
 	fs.read((char*)&val, sizeof(T));
+}
+
+uint64_t bytes_from_bit_array(uint64_t bits_per_elem, uint64_t nb_elem) {
+	return ((bits_per_elem * nb_elem - 1) / 8) + 1;
 }
 
 
@@ -41,7 +46,6 @@ Kff_file::Kff_file(const char * filename, const char * mode) {
 
 	// Open the file
 	this->fs.open(filename, streammode);
-	cout << "kff file " << filename << " opened in mode " << mode << endl;
 
 	// Write the version at the beginning of the file
 	if (this->is_writer) {
@@ -51,7 +55,6 @@ Kff_file::Kff_file(const char * filename, const char * mode) {
 	// Read the header
 	else if (this->is_reader) {
 		this->fs >> this->major_version >> this->minor_version;
-		cout << "version " << (uint64_t)this->major_version << "." << (uint64_t)this->minor_version << endl;
 
 		if (KFF_VERSION_MAJOR < this->major_version or (KFF_VERSION_MAJOR == this->major_version and KFF_VERSION_MINOR < this->minor_version)) {
 			cerr << "The software version " << KFF_VERSION_MAJOR << "." << KFF_VERSION_MINOR << " can't read files writen in version " << this->major_version << "." << this->minor_version << endl;
@@ -163,6 +166,9 @@ void Section_GV::write_var(const string & var_name, uint64_t value) {
 	fs << var_name << '\0';
 	write_value(value, fs);
 	this->nb_vars += 1;
+
+	this->vars[var_name] = value;
+	this->file->global_vars[var_name] = value;
 }
 
 void Section_GV::read_section() {
@@ -179,18 +185,20 @@ void Section_GV::read_section() {
 void Section_GV::read_var() {
 	// Name reading
 	stringstream ss;
-	char c;
-	do {
+	char c = 'o';
+	while (c != '\0') {
 		this->file->fs >> c;
 		ss << c;
-	} while (c != '\0');
+	}
 	
 	// Value reading
 	uint64_t value;
 	read_value(value, file->fs);
 
 	// Saving
-	this->vars[ss.str()] = value;
+	string name = ss.str();
+	this->vars[name] = value;
+	this->file->global_vars[name] = value;
 }
 
 void Section_GV::close() {
@@ -203,6 +211,80 @@ void Section_GV::close() {
 	fs.seekp(position);
 }
 
+
+// ----- Raw sequence section -----
+
+Section_Raw Kff_file::open_section_raw() {
+	for (auto n : this->global_vars) {
+		cout << "intern: " << this->global_vars["k"] << endl;
+		cout << n.first << " " << (this->global_vars.find("k") != this->global_vars.end() ? "Trouvé" : "KO") << "  "  << endl;
+	}
+	assert(global_vars.find("k") != global_vars.end());
+	assert(global_vars.find("max") != global_vars.end());
+	assert(global_vars.find("data_size") != global_vars.end());
+	return Section_Raw(this, global_vars["k"], global_vars["max"], global_vars["data_size"]);
+}
+
+Section_Raw::Section_Raw(Kff_file * file, uint64_t k, uint64_t max, uint64_t data_size) {
+	this->file = file;
+	this->begining = file->fs.tellp();
+	this->nb_blocks = 0;
+
+	this->k = k;
+	this->max = max;
+	this->data_size = data_size;
+
+	// Computes the number of bytes needed to store the number of kmers in each block
+	uint64_t nb_bits = static_cast<uint64_t>(ceil(log2(max)));
+	this->nb_kmers_bytes = static_cast<uint8_t>(bytes_from_bit_array(nb_bits, 1));
+
+	if (file->is_reader) {
+		// this->read_section();
+	}
+
+	if (file->is_writer) {
+		fstream & fs = file->fs;
+		fs << 'r';
+		write_value(nb_blocks, fs);
+	}
+}
+
+void Section_Raw::read_section() {
+	fstream & fs = file->fs;
+
+	char type;
+	fs >> type;
+	assert(type == 'r');
+
+	read_value(nb_blocks, fs);
+	cout << "nb blocks " << nb_blocks << endl;
+}
+
+void Section_Raw::write_compacted_sequence(uint8_t* seq, uint64_t seq_size, uint8_t * data_array) {
+	// 1 - Write nb kmers
+	uint64_t nb_kmers = seq_size - k + 1;
+	file->fs.write((char*)&nb_kmers, this->nb_kmers_bytes);
+	// 2 - Write sequence
+	uint64_t seq_bytes_needed = bytes_from_bit_array(2, seq_size);
+	// this->file->fs.write(seq, seq_bytes_needed);
+	// 3 - Write data
+
+	this->nb_blocks += 1;
+}
+
+uint64_t Section_Raw::read_compacted_sequence(uint8_t * seq, uint8_t * data_array) {
+	return 0;
+}
+
+void Section_Raw::close() {
+	// Save current position
+	fstream &	 fs = this->file->fs;
+	long position = fs.tellp();
+	// Go write the number of variables in the correct place
+	fs.seekp(this->begining + 1);
+	write_value(nb_blocks, fs);
+	fs.seekp(position);
+}
 
 
 
