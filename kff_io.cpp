@@ -267,6 +267,8 @@ void Section_Raw::write_compacted_sequence(uint8_t* seq, uint64_t seq_size, uint
 	uint64_t seq_bytes_needed = bytes_from_bit_array(2, seq_size);
 	this->file->fs.write((char *)seq, seq_bytes_needed);
 	// 3 - Write data
+	uint64_t data_bytes_needed = bytes_from_bit_array(data_size, seq_size);
+	this->file->fs.write((char *)data_array, data_bytes_needed);
 
 	this->nb_blocks += 1;
 }
@@ -276,10 +278,12 @@ uint64_t Section_Raw::read_compacted_sequence(uint8_t* seq, uint8_t* data) {
 	// 1 - Read the number of kmers in the sequence
 	file->fs.read((char*)&nb_kmers_in_block, this->nb_kmers_bytes);
 	// 2 - Read the sequence
-	size_t seq_size = nb_kmers_in_block + file->global_vars["k"] - 1;
-	size_t nb_bytes = bytes_from_bit_array(2, seq_size);
-	file->fs.read((char*)seq, nb_bytes);
+	size_t seq_size = nb_kmers_in_block + k - 1;
+	size_t seq_bytes_needed = bytes_from_bit_array(2, seq_size);
+	file->fs.read((char*)seq, seq_bytes_needed);
 	// 3 - Read the data
+	uint64_t data_bytes_needed = bytes_from_bit_array(data_size, seq_size);
+	file->fs.read((char*)seq, data_bytes_needed);
 	return nb_kmers_in_block;
 }
 

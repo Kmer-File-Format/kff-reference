@@ -30,12 +30,16 @@ int main(int argc, char * argv[]) {
 	Section_Raw sr = file.open_section_raw();
 	// 2-bit sequence encoder
 	uint8_t encoded[1024];
+	uint8_t counts[255];
 	encode_sequence("ACTAAACTGATT", 12, encoded);
-	sr.write_compacted_sequence(encoded, 12, encoded);
+	counts[0]=32;counts[1]=47;counts[2]=1;
+	sr.write_compacted_sequence(encoded, 12, counts);
 	encode_sequence("AAACTGATCG", 10, encoded);
-	sr.write_compacted_sequence(encoded, 10, encoded);
+	counts[0]=12;
+	sr.write_compacted_sequence(encoded, 10, counts);
 	encode_sequence("CTAAACTGATT", 11, encoded);
-	sr.write_compacted_sequence(encoded, 11, encoded);
+	counts[0]=1;counts[1]=47;
+	sr.write_compacted_sequence(encoded, 11, counts);
 	sr.close();
 
 	// Close and end writing of the file.
