@@ -26,7 +26,7 @@ int main(int argc, char * argv[]) {
 	sgv.write_var("data_size", 1);
 	sgv.close();
 
-	// Write a raw sequence bloc
+	// --- Write a raw sequence bloc ---
 	Section_Raw sr = file.open_section_raw();
 	// 2-bit sequence encoder
 	uint8_t encoded[1024];
@@ -41,6 +41,15 @@ int main(int argc, char * argv[]) {
 	counts[0]=1;counts[1]=47;
 	sr.write_compacted_sequence(encoded, 11, counts);
 	sr.close();
+
+	sgv = file.open_section_GV();
+	sgv.write_var("m", 8);
+	sgv.close();
+	// --- write a minimizer sequence block ---
+	Section_Minimizer sm = file.open_section_minimizer();
+	encode_sequence("AAACTGAT", 8, encoded);
+	sm.write_minimizer(encoded);
+	sm.close();
 
 	// Close and end writing of the file.
 	file.close();

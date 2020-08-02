@@ -152,7 +152,7 @@ Section values:
 * blocks: A list of blocks where each block is composed as follow:
   * n: The number of kmers stored in the block. Must be <= max (lg(max) bits).
 If max have been set to 1 in the header, this value is absent (save 1 Byte per block).
-  * m_idx: The index of the minimizer in the sequence (lg(max) bits).
+  * m_idx: The index of the minimizer in the sequence (lg(k+max-1) bits).
   * seq: The DNA sequence without the minimizer using 2 bits / nucleotide with respect to the encoding set in the header (with a padding to fill a Byte multiple). It must be composed of n+k-1-m characters (2\*(n+k-1-m) bits).
   * data: An array of n\*data_size bits containing the data associated with each kmer (empty if data_size=0).
 

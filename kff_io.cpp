@@ -299,6 +299,109 @@ void Section_Raw::close() {
 
 
 
+// ----- Minimizer sequence section -----
+
+Section_Minimizer Kff_file::open_section_minimizer() {
+	assert(this->global_vars.find("k") != this->global_vars.end());
+	assert(this->global_vars.find("m") != this->global_vars.end());
+	assert(this->global_vars.find("max") != this->global_vars.end());
+	assert(this->global_vars.find("data_size") != this->global_vars.end());
+	return Section_Minimizer(this, this->global_vars["k"], this->global_vars["m"], this->global_vars["max"], this->global_vars["data_size"]);
+}
+
+Section_Minimizer::Section_Minimizer(Kff_file * file, uint64_t k, uint64_t m, uint64_t max, uint64_t data_size) {
+	this->file = file;
+	this->begining = file->fs.tellp();
+	this->nb_blocks = 0;
+
+	this->k = k;
+	this->m = m;
+	this->max = max;
+	this->data_size = data_size;
+
+	// Computes the number of bytes needed to store the number of kmers in each block
+	uint64_t nb_bits = static_cast<uint64_t>(ceil(log2(max)));
+	this->nb_kmers_bytes = static_cast<uint8_t>(bytes_from_bit_array(nb_bits, 1));
+	this->nb_bytes_mini = static_cast<uint8_t>(bytes_from_bit_array(2, m));
+	this->minimizer = new uint8_t[nb_bytes_mini];
+	this->mini_pos_bytes = static_cast<uint8_t>(bytes_from_bit_array(k+max-1, 1));
+
+	if (file->is_reader) {
+		this->read_section_header();
+	}
+
+	if (file->is_writer) {
+		fstream & fs = file->fs;
+		fs << 'm';
+		this->write_minimizer(this->minimizer);
+		write_value(nb_blocks, fs);
+	}
+}
+
+void Section_Minimizer::write_minimizer(uint8_t * minimizer) {
+	uint64_t pos = file->fs.tellp();
+	file->fs.seekp(this->begining+1);
+	file->fs.write((char *)minimizer, this->nb_bytes_mini);
+	this->minimizer = minimizer;
+	file->fs.seekp(pos);
+}
+
+uint32_t Section_Minimizer::read_section_header() {
+	fstream & fs = file->fs;
+
+	char type;
+	fs >> type;
+	assert(type == 'm');
+
+	file->fs.read((char *)this->minimizer, this->nb_bytes_mini);
+
+	read_value(nb_blocks, fs);
+	return nb_blocks;
+}
+
+void Section_Minimizer::write_compacted_sequence_without_mini(uint8_t* seq, uint64_t seq_size, uint8_t * data_array, uint64_t mini_pos) {
+	// 1 - Write nb kmers
+	uint64_t nb_kmers = seq_size + m - k + 1;
+	file->fs.write((char*)&nb_kmers, this->nb_kmers_bytes);
+	// 2 - Write minimizer position
+	file->fs.write((char *)&mini_pos, this->mini_pos_bytes);
+	// 3 - Write sequence with chopped minimizer
+	uint64_t seq_bytes_needed = bytes_from_bit_array(2, seq_size);
+	this->file->fs.write((char *)seq, seq_bytes_needed);
+	// 4 - Write data
+	uint64_t data_bytes_needed = bytes_from_bit_array(data_size, seq_size+m);
+	this->file->fs.write((char *)data_array, data_bytes_needed);
+
+	this->nb_blocks += 1;
+}
+
+uint64_t Section_Minimizer::read_compacted_sequence(uint8_t* seq, uint8_t* data) {
+	// TODO
+	uint64_t nb_kmers_in_block = 0;
+	// 1 - Read the number of kmers in the sequence
+	file->fs.read((char*)&nb_kmers_in_block, this->nb_kmers_bytes);
+	// 2 - Read the sequence
+	size_t seq_size = nb_kmers_in_block + k - 1;
+	size_t seq_bytes_needed = bytes_from_bit_array(2, seq_size);
+	file->fs.read((char*)seq, seq_bytes_needed);
+	// 3 - Read the data
+	uint64_t data_bytes_needed = bytes_from_bit_array(data_size, seq_size);
+	file->fs.read((char*)seq, data_bytes_needed);
+	return nb_kmers_in_block;
+}
+
+void Section_Minimizer::close() {
+	// Save current position
+	fstream &	 fs = this->file->fs;
+	long position = fs.tellp();
+	// Go write the number of variables in the correct place
+	fs.seekp(this->begining + 1 + this->nb_bytes_mini);
+	write_value(nb_blocks, fs);
+	fs.seekp(position);
+}
+
+
+
 
 
 
