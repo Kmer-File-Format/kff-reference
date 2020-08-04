@@ -117,7 +117,6 @@ private:
 	uint64_t k;
 	uint64_t m;
 	uint8_t nb_bytes_mini;
-	uint8_t * minimizer;
 	uint64_t max;
 	uint64_t data_size;
 	uint8_t nb_kmers_bytes;
@@ -127,10 +126,11 @@ private:
 	uint32_t read_section_header();
 
 public:
+	uint8_t * minimizer;
 	uint32_t nb_blocks;
 
 	void write_minimizer(uint8_t * minimizer);
-	void write_compacted_sequence_without_mini(uint8_t* seq, uint64_t seq_size, uint8_t * data_array, uint64_t mini_pos);
+	void write_compacted_sequence_without_mini(uint8_t* seq, uint64_t seq_size, uint64_t mini_pos, uint8_t * data_array);
 	uint64_t read_compacted_sequence(uint8_t* seq, uint8_t* data);
 	void close();
 };

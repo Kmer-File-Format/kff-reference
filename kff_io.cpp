@@ -205,13 +205,15 @@ void Section_GV::read_var() {
 }
 
 void Section_GV::close() {
-	// Save current position
-	fstream &	 fs = this->file->fs;
-	long position = fs.tellp();
-	// Go write the number of variables in the correct place
-	fs.seekp(this->begining + 1);
-	write_value(nb_vars, fs);
-	fs.seekp(position);
+	if (file->is_writer) {
+		// Save current position
+		fstream &	 fs = this->file->fs;
+		long position = fs.tellp();
+		// Go write the number of variables in the correct place
+		fs.seekp(this->begining + 1);
+		write_value(nb_vars, fs);
+		fs.seekp(position);
+	}
 }
 
 
@@ -276,30 +278,28 @@ void Section_Raw::write_compacted_sequence(uint8_t* seq, uint64_t seq_size, uint
 
 uint64_t Section_Raw::read_compacted_sequence(uint8_t* seq, uint8_t* data) {
 	uint64_t nb_kmers_in_block = 0;
-	cout << endl;
 	// 1 - Read the number of kmers in the sequence
 	file->fs.read((char*)&nb_kmers_in_block, this->nb_kmers_bytes);
-	cout << "nb kmers " << nb_kmers_in_block << endl;
 	// 2 - Read the sequence
 	size_t seq_size = nb_kmers_in_block + k - 1;
 	size_t seq_bytes_needed = bytes_from_bit_array(2, seq_size);
 	file->fs.read((char*)seq, seq_bytes_needed);
 	// 3 - Read the data.
-	cout << "POUET "<< (uint64_t)data_size << " " << nb_kmers_in_block << endl;
 	uint64_t data_bytes_used = bytes_from_bit_array(data_size*8, nb_kmers_in_block);
-	cout << "nb data bytes: " << data_bytes_used << endl;
 	file->fs.read((char*)data, data_bytes_used);
 	return nb_kmers_in_block;
 }
 
 void Section_Raw::close() {
-	// Save current position
-	fstream &	 fs = this->file->fs;
-	long position = fs.tellp();
-	// Go write the number of variables in the correct place
-	fs.seekp(this->begining + 1);
-	write_value(nb_blocks, fs);
-	fs.seekp(position);
+	if (file->is_writer) {
+		// Save current position
+		fstream &	 fs = this->file->fs;
+		long position = fs.tellp();
+		// Go write the number of variables in the correct place
+		fs.seekp(this->begining + 1);
+		write_value(nb_blocks, fs);
+		fs.seekp(position);
+	}
 }
 
 
@@ -329,7 +329,8 @@ Section_Minimizer::Section_Minimizer(Kff_file * file, uint64_t k, uint64_t m, ui
 	this->nb_kmers_bytes = static_cast<uint8_t>(bytes_from_bit_array(nb_bits, 1));
 	this->nb_bytes_mini = static_cast<uint8_t>(bytes_from_bit_array(2, m));
 	this->minimizer = new uint8_t[nb_bytes_mini];
-	this->mini_pos_bytes = static_cast<uint8_t>(bytes_from_bit_array(k+max-1, 1));
+	uint64_t mini_pos_bits = static_cast<uint8_t>(ceil(log2(k+max-1)));
+	this->mini_pos_bytes = bytes_from_bit_array(mini_pos_bits, 1);
 
 	if (file->is_reader) {
 		this->read_section_header();
@@ -354,19 +355,24 @@ void Section_Minimizer::write_minimizer(uint8_t * minimizer) {
 uint32_t Section_Minimizer::read_section_header() {
 	fstream & fs = file->fs;
 
+	// Verify section type
 	char type;
 	fs >> type;
 	assert(type == 'm');
 
+	// Read the minimizer
 	file->fs.read((char *)this->minimizer, this->nb_bytes_mini);
 
+	// Read the number of following blocks
 	read_value(nb_blocks, fs);
 	return nb_blocks;
 }
 
-void Section_Minimizer::write_compacted_sequence_without_mini(uint8_t* seq, uint64_t seq_size, uint8_t * data_array, uint64_t mini_pos) {
+void Section_Minimizer::write_compacted_sequence_without_mini(uint8_t* seq, uint64_t seq_size, uint64_t mini_pos, uint8_t * data_array) {
 	// 1 - Write nb kmers
 	uint64_t nb_kmers = seq_size + m - k + 1;
+	cout << "nb kmers " << nb_kmers << endl;
+	cout << (uint64_t)nb_kmers_bytes << " " << (uint64_t)mini_pos_bytes << endl;
 	file->fs.write((char*)&nb_kmers, this->nb_kmers_bytes);
 	// 2 - Write minimizer position
 	file->fs.write((char *)&mini_pos, this->mini_pos_bytes);
@@ -374,7 +380,7 @@ void Section_Minimizer::write_compacted_sequence_without_mini(uint8_t* seq, uint
 	uint64_t seq_bytes_needed = bytes_from_bit_array(2, seq_size);
 	this->file->fs.write((char *)seq, seq_bytes_needed);
 	// 4 - Write data
-	uint64_t data_bytes_needed = bytes_from_bit_array(data_size, seq_size+m);
+	uint64_t data_bytes_needed = bytes_from_bit_array(data_size*8, nb_kmers);
 	this->file->fs.write((char *)data_array, data_bytes_needed);
 
 	this->nb_blocks += 1;
@@ -396,13 +402,15 @@ uint64_t Section_Minimizer::read_compacted_sequence(uint8_t* seq, uint8_t* data)
 }
 
 void Section_Minimizer::close() {
-	// Save current position
-	fstream &	 fs = this->file->fs;
-	long position = fs.tellp();
-	// Go write the number of variables in the correct place
-	fs.seekp(this->begining + 1 + this->nb_bytes_mini);
-	write_value(nb_blocks, fs);
-	fs.seekp(position);
+	if (file->is_writer) {
+		// Save current position
+		fstream &	 fs = this->file->fs;
+		long position = fs.tellp();
+		// Go write the number of variables in the correct place
+		fs.seekp(this->begining + 1 + this->nb_bytes_mini);
+		write_value(nb_blocks, fs);
+		fs.seekp(position);
+	}
 }
 
 

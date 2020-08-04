@@ -24,7 +24,7 @@ int main(int argc, char * argv[]) {
 	// Set global variables
 	Section_GV sgv = file.open_section_GV();
 	sgv.write_var("k", 10);
-	sgv.write_var("max", 255);
+	sgv.write_var("max", 240);
 	sgv.write_var("data_size", 1);
 	sgv.close();
 
@@ -47,10 +47,16 @@ int main(int argc, char * argv[]) {
 	sgv = file.open_section_GV();
 	sgv.write_var("m", 8);
 	sgv.close();
+
 	// --- write a minimizer sequence block ---
 	Section_Minimizer sm = file.open_section_minimizer();
 	encode_sequence("AAACTGAT", 8, encoded);
 	sm.write_minimizer(encoded);
+
+	encode_sequence("ACTT", 4, encoded);
+	counts[0]=32;counts[1]=47;counts[2]=1;
+	sm.write_compacted_sequence_without_mini(encoded, 4, 2, counts);
+
 	sm.close();
 
 	// Close and end writing of the file.
@@ -67,13 +73,17 @@ int main(int argc, char * argv[]) {
 
 	// --- Global variable read ---
 	char section_name = file.read_section_type();
+	cout << "Read section " << section_name << endl;
 	sgv = file.open_section_GV();
 
 	uint64_t k = file.global_vars["k"];
 	uint64_t max = file.global_vars["max"];
 	uint64_t data_size = file.global_vars["data_size"];
+	cout << endl;
 
 	// --- Read Raw Block ---
+	section_name = file.read_section_type();
+	cout << "Read section " << section_name << endl;
 	sr = file.open_section_raw();
 	cout << "nb blocks: " << sr.nb_blocks << endl;
 
@@ -88,6 +98,20 @@ int main(int argc, char * argv[]) {
 			cout << (uint64_t)data[i] << ", ";
 		cout << endl;
 	}
+	cout << endl;
+
+	// --- Read variables to load m ---
+	section_name = file.read_section_type();
+	cout << "Read section " << section_name << endl;
+	sgv = file.open_section_GV();
+	uint64_t m = file.global_vars["m"];
+	cout << endl;
+
+	// --- Read Minimizer block ---
+	sm = file.open_section_minimizer();
+	cout << "Minimizer: " << decode_sequence(sm.minimizer, m) << endl;
+
+
 
 	file.close();
 
