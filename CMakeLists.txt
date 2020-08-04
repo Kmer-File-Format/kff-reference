@@ -6,7 +6,7 @@ project(KFF VERSION 1.0)
 configure_file(kff_io.hpp.in kff_io.hpp)
 
 # specify the C++ standard
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # add the executable

@@ -32,7 +32,7 @@ public:
 	uint64_t max_kmers = 255;
 
 	std::unordered_map<std::string, uint64_t> global_vars;
-		
+
 	// --- General functions ---
 	/* Open the file filename with the mode mode.
 	 * mode must be choose in the set of values {r: read, w: write}
@@ -87,18 +87,19 @@ private:
 
 	friend class Kff_file;
 
-	uint32_t nb_blocks;
 	uint64_t k;
 	uint64_t max;
 	uint64_t data_size;
 	uint8_t nb_kmers_bytes;
 
+	uint32_t read_section_header();
 	Section_Raw(Kff_file * file, uint64_t k, uint64_t max, uint64_t data_size);
-	void read_section();
 
 public:
+	uint32_t nb_blocks;
+
+	uint64_t read_compacted_sequence(uint8_t* seq, uint8_t* data);
 	void write_compacted_sequence(uint8_t* seq, uint64_t seq_size, uint8_t * data_array);
-	uint64_t read_compacted_sequence(uint8_t * seq, uint8_t * data_array);
 	void close();
 };
 

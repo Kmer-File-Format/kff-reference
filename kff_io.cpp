@@ -3,6 +3,8 @@
 #include <sstream>
 #include <math.h>
 
+#include <map>
+
 #include "kff_io.hpp"
 
 using namespace std;
@@ -186,11 +188,12 @@ void Section_GV::read_var() {
 	// Name reading
 	stringstream ss;
 	char c = 'o';
+	this->file->fs >> c;
 	while (c != '\0') {
-		this->file->fs >> c;
 		ss << c;
+		this->file->fs >> c;
 	}
-	
+
 	// Value reading
 	uint64_t value;
 	read_value(value, file->fs);
@@ -215,14 +218,10 @@ void Section_GV::close() {
 // ----- Raw sequence section -----
 
 Section_Raw Kff_file::open_section_raw() {
-	for (auto n : this->global_vars) {
-		cout << "intern: " << this->global_vars["k"] << endl;
-		cout << n.first << " " << (this->global_vars.find("k") != this->global_vars.end() ? "Trouvé" : "KO") << "  "  << endl;
-	}
-	assert(global_vars.find("k") != global_vars.end());
-	assert(global_vars.find("max") != global_vars.end());
-	assert(global_vars.find("data_size") != global_vars.end());
-	return Section_Raw(this, global_vars["k"], global_vars["max"], global_vars["data_size"]);
+	assert(this->global_vars.find("k") != this->global_vars.end());
+	assert(this->global_vars.find("max") != this->global_vars.end());
+	assert(this->global_vars.find("data_size") != this->global_vars.end());
+	return Section_Raw(this, this->global_vars["k"], this->global_vars["max"], this->global_vars["data_size"]);
 }
 
 Section_Raw::Section_Raw(Kff_file * file, uint64_t k, uint64_t max, uint64_t data_size) {
@@ -239,7 +238,7 @@ Section_Raw::Section_Raw(Kff_file * file, uint64_t k, uint64_t max, uint64_t dat
 	this->nb_kmers_bytes = static_cast<uint8_t>(bytes_from_bit_array(nb_bits, 1));
 
 	if (file->is_reader) {
-		// this->read_section();
+		this->read_section_header();
 	}
 
 	if (file->is_writer) {
@@ -249,7 +248,7 @@ Section_Raw::Section_Raw(Kff_file * file, uint64_t k, uint64_t max, uint64_t dat
 	}
 }
 
-void Section_Raw::read_section() {
+uint32_t Section_Raw::read_section_header() {
 	fstream & fs = file->fs;
 
 	char type;
@@ -257,7 +256,7 @@ void Section_Raw::read_section() {
 	assert(type == 'r');
 
 	read_value(nb_blocks, fs);
-	cout << "nb blocks " << nb_blocks << endl;
+	return nb_blocks;
 }
 
 void Section_Raw::write_compacted_sequence(uint8_t* seq, uint64_t seq_size, uint8_t * data_array) {
@@ -266,14 +265,26 @@ void Section_Raw::write_compacted_sequence(uint8_t* seq, uint64_t seq_size, uint
 	file->fs.write((char*)&nb_kmers, this->nb_kmers_bytes);
 	// 2 - Write sequence
 	uint64_t seq_bytes_needed = bytes_from_bit_array(2, seq_size);
-	// this->file->fs.write(seq, seq_bytes_needed);
+	this->file->fs.write((char *)seq, seq_bytes_needed);
 	// 3 - Write data
+	uint64_t data_bytes_needed = bytes_from_bit_array(data_size, seq_size);
+	this->file->fs.write((char *)data_array, data_bytes_needed);
 
 	this->nb_blocks += 1;
 }
 
-uint64_t Section_Raw::read_compacted_sequence(uint8_t * seq, uint8_t * data_array) {
-	return 0;
+uint64_t Section_Raw::read_compacted_sequence(uint8_t* seq, uint8_t* data) {
+	uint64_t nb_kmers_in_block = 0;
+	// 1 - Read the number of kmers in the sequence
+	file->fs.read((char*)&nb_kmers_in_block, this->nb_kmers_bytes);
+	// 2 - Read the sequence
+	size_t seq_size = nb_kmers_in_block + k - 1;
+	size_t seq_bytes_needed = bytes_from_bit_array(2, seq_size);
+	file->fs.read((char*)seq, seq_bytes_needed);
+	// 3 - Read the data
+	uint64_t data_bytes_needed = bytes_from_bit_array(data_size, seq_size);
+	file->fs.read((char*)seq, data_bytes_needed);
+	return nb_kmers_in_block;
 }
 
 void Section_Raw::close() {
