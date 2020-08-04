@@ -256,6 +256,7 @@ uint32_t Section_Raw::read_section_header() {
 	assert(type == 'r');
 
 	read_value(nb_blocks, fs);
+
 	return nb_blocks;
 }
 
@@ -267,7 +268,7 @@ void Section_Raw::write_compacted_sequence(uint8_t* seq, uint64_t seq_size, uint
 	uint64_t seq_bytes_needed = bytes_from_bit_array(2, seq_size);
 	this->file->fs.write((char *)seq, seq_bytes_needed);
 	// 3 - Write data
-	uint64_t data_bytes_needed = bytes_from_bit_array(data_size, seq_size);
+	uint64_t data_bytes_needed = bytes_from_bit_array(data_size*8, nb_kmers);
 	this->file->fs.write((char *)data_array, data_bytes_needed);
 
 	this->nb_blocks += 1;
@@ -275,15 +276,19 @@ void Section_Raw::write_compacted_sequence(uint8_t* seq, uint64_t seq_size, uint
 
 uint64_t Section_Raw::read_compacted_sequence(uint8_t* seq, uint8_t* data) {
 	uint64_t nb_kmers_in_block = 0;
+	cout << endl;
 	// 1 - Read the number of kmers in the sequence
 	file->fs.read((char*)&nb_kmers_in_block, this->nb_kmers_bytes);
+	cout << "nb kmers " << nb_kmers_in_block << endl;
 	// 2 - Read the sequence
 	size_t seq_size = nb_kmers_in_block + k - 1;
 	size_t seq_bytes_needed = bytes_from_bit_array(2, seq_size);
 	file->fs.read((char*)seq, seq_bytes_needed);
-	// 3 - Read the data
-	uint64_t data_bytes_needed = bytes_from_bit_array(data_size, seq_size);
-	file->fs.read((char*)seq, data_bytes_needed);
+	// 3 - Read the data.
+	cout << "POUET "<< (uint64_t)data_size << " " << nb_kmers_in_block << endl;
+	uint64_t data_bytes_used = bytes_from_bit_array(data_size*8, nb_kmers_in_block);
+	cout << "nb data bytes: " << data_bytes_used << endl;
+	file->fs.read((char*)data, data_bytes_used);
 	return nb_kmers_in_block;
 }
 

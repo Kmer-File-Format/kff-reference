@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cassert>
 #include <sstream>
+#include <string>
 
 #include "kff_io.hpp"
 
@@ -8,6 +9,7 @@ using namespace std;
 
 
 void encode_sequence(char * sequence, size_t size, uint8_t * encoded);
+string decode_sequence(uint8_t * encoded, size_t size);
 
 int main(int argc, char * argv[]) {
 	// --- header writing ---
@@ -80,7 +82,11 @@ int main(int argc, char * argv[]) {
 	for (auto i=0 ; i<sr.nb_blocks ; i++) {
 		cout << "bloc " << (i+1) << ": ";
 		uint32_t nb_kmers = sr.read_compacted_sequence(seq, data);
-		cout << nb_kmers << " kmers" << endl;
+		cout << nb_kmers << " kmers : ";
+		cout << decode_sequence(seq, nb_kmers + k - 1) << " - ";
+		for (auto i=0 ; i<nb_kmers ; i++)
+			cout << (uint64_t)data[i] << ", ";
+		cout << endl;
 	}
 
 	file.close();
@@ -110,7 +116,6 @@ void encode_sequence(char * sequence, size_t size, uint8_t * encoded) {
 	}
 }
 
-
 /* Transform a char * sequence into a uint8_t 2-bits/nucl
  * Encoding ACTG
  * Size must be <= 4
@@ -125,5 +130,43 @@ uint8_t uint8_packing(char * sequence, size_t size) {
 	}
 
 	return val;
+}
+
+
+void uint8_unpacking(uint8_t packed, char * decoded, size_t size);
+string decode_sequence(uint8_t * encoded, size_t size) {
+	stringstream ss;
+	char tmp_chars[4];
+
+	// Decode the truncated first compacted 8 bits
+	size_t remnant = size % 4;
+	if (remnant > 0) {
+		uint8_unpacking(encoded[0], tmp_chars, remnant);
+		for (size_t i=0 ; i<remnant ; i++) {
+			ss << tmp_chars[i];
+		}
+		encoded += 1;
+	}
+
+	// Decode all the 8 bits packed
+	size_t nb_uint_used = size / 4;
+	for (size_t i=0 ; i<nb_uint_used ; i++) {
+		uint8_unpacking(encoded[i], tmp_chars, 4);
+		for (size_t i=0 ; i<4 ; i++) {
+			ss << tmp_chars[i];
+		}
+	}
+
+	return ss.str();
+}
+
+char const_nucleotides[4] = {'A', 'C', 'T', 'G'};
+void uint8_unpacking(uint8_t packed, char * decoded, size_t size) {
+	assert(size <= 4);
+
+	size_t offset = 4 - size;
+	for (size_t i=0 ; i<size ; i++) {
+		decoded[i] = const_nucleotides[(packed >> ((3-i-offset) * 2)) & 0b11];
+	}
 }
 
