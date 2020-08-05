@@ -340,6 +340,7 @@ Section_Minimizer::Section_Minimizer(Kff_file * file, uint64_t k, uint64_t m, ui
 		fstream & fs = file->fs;
 		fs << 'm';
 		this->write_minimizer(this->minimizer);
+		file->fs.seekp(file->fs.tellp()+(long)nb_bytes_mini);
 		write_value(nb_blocks, fs);
 	}
 }
@@ -350,6 +351,7 @@ void Section_Minimizer::write_minimizer(uint8_t * minimizer) {
 	file->fs.write((char *)minimizer, this->nb_bytes_mini);
 	this->minimizer = minimizer;
 	file->fs.seekp(pos);
+	
 }
 
 uint32_t Section_Minimizer::read_section_header() {
@@ -371,8 +373,6 @@ uint32_t Section_Minimizer::read_section_header() {
 void Section_Minimizer::write_compacted_sequence_without_mini(uint8_t* seq, uint64_t seq_size, uint64_t mini_pos, uint8_t * data_array) {
 	// 1 - Write nb kmers
 	uint64_t nb_kmers = seq_size + m - k + 1;
-	cout << "nb kmers " << nb_kmers << endl;
-	cout << (uint64_t)nb_kmers_bytes << " " << (uint64_t)mini_pos_bytes << endl;
 	file->fs.write((char*)&nb_kmers, this->nb_kmers_bytes);
 	// 2 - Write minimizer position
 	file->fs.write((char *)&mini_pos, this->mini_pos_bytes);
@@ -386,18 +386,21 @@ void Section_Minimizer::write_compacted_sequence_without_mini(uint8_t* seq, uint
 	this->nb_blocks += 1;
 }
 
-uint64_t Section_Minimizer::read_compacted_sequence(uint8_t* seq, uint8_t* data) {
-	// TODO
+uint64_t Section_Minimizer::read_compacted_sequence_without_mini(uint8_t* seq, uint8_t* data, uint64_t & mini_pos) {
 	uint64_t nb_kmers_in_block = 0;
 	// 1 - Read the number of kmers in the sequence
 	file->fs.read((char*)&nb_kmers_in_block, this->nb_kmers_bytes);
-	// 2 - Read the sequence
-	size_t seq_size = nb_kmers_in_block + k - 1;
+	// 2 - Read the minimizer position
+	uint64_t tmp_mini_pos;
+	file->fs.read((char *)&tmp_mini_pos, this->mini_pos_bytes);
+	mini_pos = tmp_mini_pos;
+	// 3 - Read the sequence
+	size_t seq_size = nb_kmers_in_block + k - m - 1;
 	size_t seq_bytes_needed = bytes_from_bit_array(2, seq_size);
 	file->fs.read((char*)seq, seq_bytes_needed);
-	// 3 - Read the data
-	uint64_t data_bytes_needed = bytes_from_bit_array(data_size, seq_size);
-	file->fs.read((char*)seq, data_bytes_needed);
+	// 4 - Read the data
+	uint64_t data_bytes_needed = bytes_from_bit_array(data_size*8, nb_kmers_in_block);
+	file->fs.read((char*)data, data_bytes_needed);
 	return nb_kmers_in_block;
 }
 

@@ -73,13 +73,11 @@ int main(int argc, char * argv[]) {
 
 	// --- Global variable read ---
 	char section_name = file.read_section_type();
-	cout << "Read section " << section_name << endl;
 	sgv = file.open_section_GV();
 
 	uint64_t k = file.global_vars["k"];
 	uint64_t max = file.global_vars["max"];
 	uint64_t data_size = file.global_vars["data_size"];
-	cout << endl;
 
 	// --- Read Raw Block ---
 	section_name = file.read_section_type();
@@ -111,7 +109,17 @@ int main(int argc, char * argv[]) {
 	sm = file.open_section_minimizer();
 	cout << "Minimizer: " << decode_sequence(sm.minimizer, m) << endl;
 
-
+	for (auto i=0 ; i<sm.nb_blocks ; i++) {
+		cout << "bloc " << (i+1) << ": ";
+		uint64_t mini_pos;
+		uint32_t nb_kmers = sm.read_compacted_sequence_without_mini(seq, data, mini_pos);
+		cout << nb_kmers << " kmers : ";
+		cout << decode_sequence(seq, nb_kmers + k - m - 1) << " - " << mini_pos << " - ";
+		for (auto i=0 ; i<nb_kmers ; i++)
+			cout << (uint64_t)data[i] << ", ";
+		cout << endl;
+	}
+	cout << endl;
 
 	file.close();
 
