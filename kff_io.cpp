@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cassert>
+#include <cstring>
 #include <sstream>
 #include <math.h>
 
@@ -384,6 +385,32 @@ void Section_Minimizer::write_compacted_sequence_without_mini(uint8_t* seq, uint
 	this->file->fs.write((char *)data_array, data_bytes_needed);
 
 	this->nb_blocks += 1;
+}
+
+void Section_Minimizer::write_compacted_sequence (uint8_t* seq, uint64_t seq_size, uint64_t mini_pos, uint8_t * data_array) {
+	uint64_t seq_bytes = bytes_from_bit_array(2, seq_size);
+	uint64_t seq_copy_bytes = bytes_from_bit_array(2, seq_size-m);
+	// Create a copy of the sequence
+	uint8_t * seq_copy = new uint8_t[seq_bytes];
+	memcpy(seq_copy, seq, seq_bytes);
+	// Remove bits after minimizer
+	uint64_t mini_byte_idx = mini_pos / 4;
+	// remove the bits incide of the byte where the minimizer starts (keep prefix only)
+	seq_copy[mini_byte_idx] &= ((1 << ((mini_pos%4)*2)) - 1);
+	for (auto i=mini_byte_idx+1 ; i<seq_copy_bytes ; i++)
+		seq_copy[i] = 0;
+
+	// Compute shift values
+	uint64_t shift_length = 2 * m;
+	uint64_t byte_shift = shift_length / 8;
+	uint64_t bit_shit = shift_length % 8;
+	// complete sequence with suffix
+	for (auto i=mini_byte_idx ; i<seq_copy_bytes ; i++) {
+		seq_copy[i] |= seq[i+byte_shift] << bit_shit;
+		seq_copy[i+1] |= seq[i+byte_shift] >> (8-bit_shit);
+	}
+
+	this->write_compacted_sequence_without_mini(seq_copy, seq_size-m, mini_pos, data_array);
 }
 
 uint64_t Section_Minimizer::read_compacted_sequence_without_mini(uint8_t* seq, uint8_t* data, uint64_t & mini_pos) {

@@ -131,6 +131,7 @@ public:
 
 	void write_minimizer(uint8_t * minimizer);
 	void write_compacted_sequence_without_mini(uint8_t* seq, uint64_t seq_size, uint64_t mini_pos, uint8_t * data_array);
+	void write_compacted_sequence (uint8_t* seq, uint64_t seq_size, uint64_t mini_pos, uint8_t * data_array);
 	uint64_t read_compacted_sequence_without_mini(uint8_t* seq, uint8_t* data, uint64_t & mini_pos);
 	void close();
 };
