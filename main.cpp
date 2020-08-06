@@ -53,13 +53,15 @@ int main(int argc, char * argv[]) {
 	encode_sequence("AAACTGAT", 8, encoded);
 	sm.write_minimizer(encoded);
 
-	encode_sequence("ACTT", 4, encoded);
-	counts[0]=32;counts[1]=47;counts[2]=1;
-	sm.write_compacted_sequence_without_mini(encoded, 4, 3, counts);
-
 	encode_sequence("ACTAAACTGATT", 12, encoded);
 	counts[0]=32;counts[1]=47;counts[2]=1;
 	sm.write_compacted_sequence(encoded, 12, 3, counts);
+	encode_sequence("AAACTGATCG", 10, encoded);
+	counts[0]=12;
+	sm.write_compacted_sequence(encoded, 10, 0, counts);
+	encode_sequence("CTAAACTGATT", 11, encoded);
+	counts[0]=1;counts[1]=47;
+	sm.write_compacted_sequence(encoded, 11, 2, counts);
 
 	sm.close();
 
