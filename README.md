@@ -242,3 +242,9 @@ This small example have been reduced in size from 23 Bytes to 22 Bytes using min
 
 We would like to represent sequences as grammar to compact futher in some cases.
 This section is still under construction.
+
+
+# Implementations
+
+This repository contains some libraries that can be freely used to write and read kff files.
+For now, a low level C++ version is available inside of the C++ subdirectory.
