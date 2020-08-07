@@ -118,9 +118,10 @@ int main(int argc, char * argv[]) {
 	for (auto i=0 ; i<sm.nb_blocks ; i++) {
 		cout << "bloc " << (i+1) << ": ";
 		uint64_t mini_pos;
-		uint32_t nb_kmers = sm.read_compacted_sequence_without_mini(seq, data, mini_pos);
+		// uint32_t nb_kmers = sm.read_compacted_sequence_without_mini(seq, data, mini_pos);
+		uint32_t nb_kmers = sm.read_compacted_sequence(seq, data);
 		cout << nb_kmers << " kmers : ";
-		cout << decode_sequence(seq, nb_kmers + k - m - 1) << " - " << mini_pos << " - ";
+		cout << decode_sequence(seq, nb_kmers + k - 1) << " - ";
 		for (auto i=0 ; i<nb_kmers ; i++)
 			cout << (uint64_t)data[i] << ", ";
 		cout << endl;

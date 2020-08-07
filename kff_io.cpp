@@ -392,7 +392,7 @@ uint64_t Section_Minimizer::read_compacted_sequence_without_mini(uint8_t* seq, u
 	// 1 - Read the number of kmers in the sequence
 	file->fs.read((char*)&nb_kmers_in_block, this->nb_kmers_bytes);
 	// 2 - Read the minimizer position
-	uint64_t tmp_mini_pos;
+	uint64_t tmp_mini_pos = 0;
 	file->fs.read((char *)&tmp_mini_pos, this->mini_pos_bytes);
 	mini_pos = tmp_mini_pos;
 	// 3 - Read the sequence
@@ -405,64 +405,9 @@ uint64_t Section_Minimizer::read_compacted_sequence_without_mini(uint8_t* seq, u
 	return nb_kmers_in_block;
 }
 
-/* Extract a shifted byte from a byte array.
- * Start included, stop excluded
+/* Bitshift to the left all the bits in the array with a maximum of 7 bits.
+ * Overflow on the left will be set into the previous cell.
  */
-uint8_t get_byte(uint8_t * bitarray, uint64_t start_bit, uint64_t stop_bit) {
-	assert(stop_bit - start_bit <= 8);
-	uint8_t byte = 0;
-
-	uint64_t start_byte_idx = start_bit / 8;
-	uint64_t stop_byte_idx = stop_bit / 8;
-	uint64_t nb_bits_left = 8 - (start_bit % 8);
-	uint8_t mask = (1 << nb_bits_left) - 1;
-
-	byte = bitarray[start_byte_idx] & mask;
-
-	uint8_t stop_offset = stop_bit % 8;
-	if (stop_byte_idx == start_byte_idx) {
-		byte >>= (8-(stop_offset));
-	} else if (stop_offset != 0) {
-		byte <<= stop_offset;
-		mask = (1 << stop_offset) - 1;
-		byte |= (bitarray[stop_byte_idx] >> (8 - stop_offset)) & mask;
-	}
-	
-	return byte;
-}
-
-void set_byte(uint8_t * bitarray, uint8_t byte, uint64_t start_bit, uint64_t stop_bit) {
-	assert(stop_bit - start_bit <= 8);
-	byte <<= 8 - stop_bit + start_bit;
-
-	uint64_t start_byte_idx = start_bit / 8;
-	uint64_t left_size = 8 - (start_bit % 8);
-	uint64_t stop_byte_idx = stop_bit / 8;
-	uint64_t right_size = stop_bit % 8;
-	
-	// Prepare the first bits
-	uint8_t mask = (1 << left_size) - 1;
-	uint8_t left_byte = byte;
-	left_byte >>= 8 - left_size;
-	if (stop_byte_idx == start_byte_idx) {
-		mask &= (1 << (stop_bit % 8)) - 1;
-		left_byte &= mask;
-	}
-	// Erase the previous stored bits
-	bitarray[start_byte_idx] &= !mask;
-	// Set the first bits
-	bitarray[start_byte_idx] |= left_byte;
-	
-	if (stop_byte_idx != start_byte_idx and stop_bit % 8 != 0) {
-		mask = (1 << (stop_bit % 8)) - 1;
-		mask <<= 8 - right_size;
-		// Erase the previous stored bits
-		bitarray[stop_byte_idx] &= !mask;
-		// Add the last bits
-		bitarray[stop_byte_idx] |= (byte << (8 - right_size));
-	}
-}
-
 void leftshift8(uint8_t * bitarray, size_t length, size_t bitshift) {
 	assert(bitshift < 8);
 
@@ -472,6 +417,7 @@ void leftshift8(uint8_t * bitarray, size_t length, size_t bitshift) {
 	bitarray[length-1] <<= bitshift;
 }
 
+/* Similar to the previous function but on the right */
 void rightshift8(uint8_t * bitarray, size_t length, size_t bitshift) {
 	assert(bitshift < 8);
 
@@ -481,7 +427,16 @@ void rightshift8(uint8_t * bitarray, size_t length, size_t bitshift) {
 	bitarray[0] >>= bitshift;
 }
 
+/* Fusion to bytes into one.
+ * The merge_index higher bits are from left_bits the others from right_bits
+ */
+inline uint8_t fusion8(uint8_t left_bits, uint8_t right_bits, size_t merge_index) {
+	uint8_t mask = 0xFF << (8-merge_index);
+	return (left_bits & mask) | (right_bits & ~mask);
+}
+
 void Section_Minimizer::write_compacted_sequence (uint8_t* seq, uint64_t seq_size, uint64_t mini_pos, uint8_t * data_array) {
+	// Compute all the bit and byte quantities needed.
 	uint64_t seq_bytes = bytes_from_bit_array(2, seq_size);
 
 	uint64_t bit_mini_start = 2 * mini_pos;
@@ -492,8 +447,10 @@ void Section_Minimizer::write_compacted_sequence (uint8_t* seq, uint64_t seq_siz
 	uint64_t byte_mini_stop = bit_mini_stop / 8;
 	uint8_t offset_mini_stop = bit_mini_stop % 8;
 
+	// Prepare space for sequence manipulation
 	size_t copy_size = seq_bytes - byte_mini_stop + 1;
 	uint8_t * seq_copy = new uint8_t[copy_size];
+	// Copy the suffix of the sequence and bitshift it to align with the prefix
 	if (offset_mini_start < offset_mini_stop) {
 		memcpy(seq_copy + 1, seq + byte_mini_stop, seq_bytes - byte_mini_stop);
 		leftshift8(seq_copy, copy_size, offset_mini_stop - offset_mini_start);
@@ -504,19 +461,80 @@ void Section_Minimizer::write_compacted_sequence (uint8_t* seq, uint64_t seq_siz
 		memcpy(seq_copy, seq + byte_mini_stop, seq_bytes - byte_mini_stop);
 	}
 
-	uint8_t first_byte = seq[byte_mini_start];
-	for (uint64_t i=0 ; i<seq_bytes-byte_mini_stop ; i++) {
+	// Merge the shifted suffix with the prefix to compact the sequence
+	seq[byte_mini_start] = fusion8(seq[byte_mini_start], seq_copy[0],offset_mini_start);
+	for (uint64_t i=1 ; i<seq_bytes-byte_mini_stop ; i++) {
 		seq[byte_mini_start+i] = seq_copy[i];
 	}
-	uint8_t mask = 0xFF << (8 - offset_mini_start);
-	first_byte &= mask;
 
-	seq[byte_mini_start] &= ~mask;
-	seq[byte_mini_start] |= first_byte;
-
+	// Write the compacted sequence into file.
 	this->write_compacted_sequence_without_mini(seq, seq_size-m, mini_pos, data_array);
 
 	delete seq_copy;
+}
+
+uint64_t Section_Minimizer::read_compacted_sequence(uint8_t* seq, uint8_t* data) {
+	// Read the block
+	uint64_t mini_pos;
+	uint64_t nb_kmers_in_block = this->read_compacted_sequence_without_mini(seq, data, mini_pos);
+	
+	uint64_t seq_size = nb_kmers_in_block + k - 1;
+	uint64_t seq_bytes = bytes_from_bit_array(2, seq_size);
+	uint64_t size_no_mini = seq_size - m;
+	uint64_t bytes_no_mini = bytes_from_bit_array(2, size_no_mini);
+	leftshift8(seq, bytes_no_mini, (8 - size_no_mini * 2) % 8);
+
+	// Compute usefull quantities
+	uint64_t bit_mini_start = 2 * mini_pos;
+	uint64_t byte_mini_start = bit_mini_start / 8;
+	uint8_t offset_mini_start = bit_mini_start % 8;
+
+	uint64_t bit_mini_stop = bit_mini_start + 2 * m;
+	uint64_t byte_mini_stop = bit_mini_stop / 8;
+	uint8_t offset_mini_stop = bit_mini_stop % 8;
+
+	// Copy the suffix to shift it
+	uint64_t size_suffix = size_no_mini - mini_pos;
+	uint64_t suffix_bytes = bytes_from_bit_array(2, size_suffix+1);
+	uint8_t * suffix = new uint8_t[suffix_bytes + 1];
+
+	// Add the suffix
+	uint64_t nb_bytes_suffix_used = suffix_bytes + 1;
+	if (offset_mini_start < offset_mini_stop) {
+		memcpy(suffix, seq+byte_mini_start, suffix_bytes);
+		rightshift8(suffix, suffix_bytes+1, offset_mini_stop-offset_mini_start);
+	} else if (offset_mini_start > offset_mini_stop) {
+		memcpy(suffix+1, seq+byte_mini_start, suffix_bytes);
+		leftshift8(suffix, suffix_bytes+1, offset_mini_start-offset_mini_stop);
+	} else {
+		memcpy(suffix, seq+byte_mini_start, suffix_bytes+1);
+		nb_bytes_suffix_used -= 1;
+	}
+
+	seq[byte_mini_stop] = fusion8(seq[byte_mini_stop], suffix[0], offset_mini_stop);
+	for (auto i=1 ; i<nb_bytes_suffix_used ; i++) {
+		seq[byte_mini_stop+i] = suffix[i];
+	}
+
+	// Prepare the minimizer
+	uint8_t * mini_shifted = new uint8_t[this->nb_bytes_mini+1];
+	memcpy(mini_shifted, this->minimizer, this->nb_bytes_mini);
+	uint64_t mini_offset = (8 - ((2 * m) % 8)) % 8;
+	leftshift8(mini_shifted, this->nb_bytes_mini, mini_offset);
+	rightshift8(mini_shifted, this->nb_bytes_mini+1, offset_mini_start);
+	// Add the minimizer inside the sequence
+	seq[byte_mini_start] = fusion8(seq[byte_mini_start], mini_shifted[0], offset_mini_start);
+	for (auto i=1 ; i<byte_mini_stop-byte_mini_start ; i++) {
+		seq[byte_mini_start+i] = mini_shifted[i];
+	}
+
+	seq[byte_mini_stop] = fusion8(mini_shifted[this->nb_bytes_mini], seq[byte_mini_stop], offset_mini_stop);
+
+	rightshift8(seq, seq_bytes, (8 - 2 * (seq_size % 4)) % 8);
+
+	delete suffix;
+	delete mini_shifted;
+	return nb_kmers_in_block;
 }
 
 void Section_Minimizer::close() {
