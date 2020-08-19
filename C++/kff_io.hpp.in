@@ -1,3 +1,15 @@
+/**
+ * @file kff_io.cpp
+ *
+ * @brief This file define the classes needed to create and read kff files.
+ * This file contains a low level and a high level APIs.
+ * The Kff_file class is the base class for the low level API.
+ *
+ * @author Yoann Dufresne
+ * Contact: yoann.dufresne0@gmail.com
+ *
+ */
+
 #include <fstream>
 #include <unordered_map>
 
@@ -12,6 +24,13 @@ class Section_GV;
 class Section_Raw;
 class Section_Minimizer;
 
+/**
+ * This class is the central class for the low level kff file API.
+ *
+ * Kff_file directly contains the functions needed to create/read the kff file headers.
+ * The class also contains functions to open section objects (one per section type).
+ *
+ */
 class Kff_file {
 private:
 	bool is_writer;
@@ -36,29 +55,94 @@ public:
 	std::unordered_map<std::string, uint64_t> global_vars;
 
 	// --- General functions ---
-	/* Open the file filename with the mode mode.
+	/** Open the file filename with the mode mode.
 	 * mode must be choose in the set of values {r: read, w: write}
+	 *
+	 * @param filename The path to the file to construct/read.
+	 * @param mode Opening mode of the file. w for writing, r for reading.
+   *
 	 */
 	Kff_file(const char * filename, const char * mode);
-	/* Close the file */
+	/** 
+	 * Close the file
+	 *
+	 * Physically close the file and save buffered parts to the disk if w.
+	 */
 	void close();
 
 	// --- header functions ---
-	/* Set the encoding used to compact the nucleotides into 2-bits values.
+	/**
+	 * Set the encoding used to compact the nucleotides into 2-bits values.
 	 * Only the two lower bits of each uint8_t will be used.
 	 * The 4 2-bits values must be diferent to each other.
+	 *
+	 * @param a encoding for A or a letters.
+	 * @param c encoding for C or c letters.
+	 * @param g encoding for G or g letters.
+	 * @param t encoding for T or t letters.
 	 */
 	void write_encoding(uint8_t a, uint8_t c, uint8_t g, uint8_t t);
+	/**
+	 * Read encoding from file and save it to the public argument "encoding".
+	 *
+	 */
 	void read_encoding();
+	/**
+	 * Write the metadata entered by the user.
+	 * Also write all the needed values like metadata section size into the file.
+	 *
+	 * @param size The size of data array.
+	 * @param data An array of data. Can either be plain text or binary data.
+	 *
+	 */
 	void write_metadata(uint32_t size, char * data);
+	/**
+	 * Read the metadata size from the file.
+	 *
+	 * @return The size in Bytes of the metadata field inside of the file
+	 *
+	 */
 	uint32_t size_metadata();
+	/**
+	 * Read the next size Bytes in the file and return them into the data array.
+	 * This function is used to read the metadata field.
+	 *
+	 * @param size Size to read (in Bytes).
+	 * @param data Array filled with the file content (up to size).
+	 *
+	 */
 	void read_metadata(uint32_t size, char * data);
 
 
 	// --- general section ---
+	/**
+	 * Read the next Byte and return it.
+	 * If the file pointer is correctly aligned with the beginning of a section, this Byte is a char that represents the section type.
+	 *
+	 * @return A char corresponding to the type of the following section.
+	 *
+	 */
 	char read_section_type();
+	/**
+	 * Create and return a Section_GV object.
+	 * This object is used to create/read the Global Variable sections.
+	 *
+	 * @retun An openend Section_GV object with the same io caracteristics than the file.
+	 */
 	Section_GV open_section_GV();
+	/**
+	 * Create and return a Section_Raw object.
+	 * This object is used to create/read the Raw kmer sections.
+	 *
+	 * @retun An openend Section_Raw object with the same io caracteristics than the file.
+	 */
 	Section_Raw open_section_raw();
+	/**
+	 * Create and return a Section_Minimizer object.
+	 * This object is used to create/read the Minimizer kmer sections.
+	 *
+	 * @retun An openend Section_Raw object with the same io caracteristics than the file.
+	 */
 	Section_Minimizer open_section_minimizer();
 };
 
