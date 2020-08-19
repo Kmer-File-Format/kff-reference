@@ -152,12 +152,14 @@ Section_GV::Section_GV(Kff_file * file) {
 	this->file = file;
 	this->begining = file->fs.tellp();
 	this->nb_vars = 0;
+	this->is_closed = true;
 
 	if (file->is_reader) {
 		this->read_section();
 	}
 
 	if (file->is_writer) {
+		this->is_closed = false;
 		fstream & fs = file->fs;
 		fs << 'v';
 		write_value(nb_vars, fs);
@@ -165,6 +167,8 @@ Section_GV::Section_GV(Kff_file * file) {
 }
 
 void Section_GV::write_var(const string & var_name, uint64_t value) {
+	assert(!this->is_closed);
+
 	auto & fs = this->file->fs;
 	fs << var_name << '\0';
 	write_value(value, fs);
@@ -214,6 +218,7 @@ void Section_GV::close() {
 		fs.seekp(this->begining + 1);
 		write_value(nb_vars, fs);
 		fs.seekp(position);
+		this->is_closed = true;
 	}
 }
 
@@ -231,6 +236,7 @@ Section_Raw::Section_Raw(Kff_file * file, uint64_t k, uint64_t max, uint64_t dat
 	this->file = file;
 	this->begining = file->fs.tellp();
 	this->nb_blocks = 0;
+	this->is_closed = true;
 
 	this->k = k;
 	this->max = max;
@@ -245,6 +251,7 @@ Section_Raw::Section_Raw(Kff_file * file, uint64_t k, uint64_t max, uint64_t dat
 	}
 
 	if (file->is_writer) {
+		this->is_closed = false;
 		fstream & fs = file->fs;
 		fs << 'r';
 		write_value(nb_blocks, fs);
@@ -264,6 +271,7 @@ uint32_t Section_Raw::read_section_header() {
 }
 
 void Section_Raw::write_compacted_sequence(uint8_t* seq, uint64_t seq_size, uint8_t * data_array) {
+	assert(!this->is_closed);
 	// 1 - Write nb kmers
 	uint64_t nb_kmers = seq_size - k + 1;
 	file->fs.write((char*)&nb_kmers, this->nb_kmers_bytes);
@@ -300,6 +308,7 @@ void Section_Raw::close() {
 		fs.seekp(this->begining + 1);
 		write_value(nb_blocks, fs);
 		fs.seekp(position);
+		this->is_closed = true;
 	}
 }
 
@@ -319,6 +328,7 @@ Section_Minimizer::Section_Minimizer(Kff_file * file, uint64_t k, uint64_t m, ui
 	this->file = file;
 	this->begining = file->fs.tellp();
 	this->nb_blocks = 0;
+	this->is_closed = true;
 
 	this->k = k;
 	this->m = m;
@@ -338,6 +348,7 @@ Section_Minimizer::Section_Minimizer(Kff_file * file, uint64_t k, uint64_t m, ui
 	}
 
 	if (file->is_writer) {
+		this->is_closed = false;
 		fstream & fs = file->fs;
 		fs << 'm';
 		this->write_minimizer(this->minimizer);
@@ -347,6 +358,7 @@ Section_Minimizer::Section_Minimizer(Kff_file * file, uint64_t k, uint64_t m, ui
 }
 
 void Section_Minimizer::write_minimizer(uint8_t * minimizer) {
+	assert(!this->is_closed);
 	uint64_t pos = file->fs.tellp();
 	file->fs.seekp(this->begining+1);
 	file->fs.write((char *)minimizer, this->nb_bytes_mini);
@@ -372,6 +384,7 @@ uint32_t Section_Minimizer::read_section_header() {
 }
 
 void Section_Minimizer::write_compacted_sequence_without_mini(uint8_t* seq, uint64_t seq_size, uint64_t mini_pos, uint8_t * data_array) {
+	assert(!this->is_closed);
 	// 1 - Write nb kmers
 	uint64_t nb_kmers = seq_size + m - k + 1;
 	file->fs.write((char*)&nb_kmers, this->nb_kmers_bytes);
@@ -436,6 +449,7 @@ inline uint8_t fusion8(uint8_t left_bits, uint8_t right_bits, size_t merge_index
 }
 
 void Section_Minimizer::write_compacted_sequence (uint8_t* seq, uint64_t seq_size, uint64_t mini_pos, uint8_t * data_array) {
+	assert(!this->is_closed);
 	// Compute all the bit and byte quantities needed.
 	uint64_t seq_bytes = bytes_from_bit_array(2, seq_size);
 
@@ -546,6 +560,7 @@ void Section_Minimizer::close() {
 		fs.seekp(this->begining + 1 + this->nb_bytes_mini);
 		write_value(nb_blocks, fs);
 		fs.seekp(position);
+		this->is_closed = true;
 	}
 }
 

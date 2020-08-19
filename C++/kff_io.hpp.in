@@ -68,6 +68,7 @@ private:
 	Kff_file * file;
 	long begining;
 	uint64_t nb_vars;
+	bool is_closed;
 
 	Section_GV(Kff_file * file);
 	void read_section();
@@ -87,6 +88,7 @@ class Section_Raw {
 private:
 	Kff_file * file;
 	long begining;
+	bool is_closed;
 
 	friend class Kff_file;
 
@@ -111,6 +113,7 @@ class Section_Minimizer {
 private:
 	Kff_file * file;
 	long begining;
+	bool is_closed;
 
 	friend class Kff_file;
 
