@@ -1,0 +1,202 @@
+\hypertarget{classKff__file}{}\doxysection{Kff\+\_\+file Class Reference}
+\label{classKff__file}\index{Kff\_file@{Kff\_file}}
+
+
+{\ttfamily \#include $<$kff\+\_\+io.\+hpp$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classKff__file_a5af58e2bfc44fbc8c8cdc7e7443ef225}{Kff\+\_\+file}} (const char $\ast$filename, const char $\ast$mode)
+\item 
+void \mbox{\hyperlink{classKff__file_ad8ebc9e009313bcce969aa171ae16bbf}{close}} ()
+\item 
+void \mbox{\hyperlink{classKff__file_a47f265434043554af03e2001f8f35779}{write\+\_\+encoding}} (uint8\+\_\+t a, uint8\+\_\+t c, uint8\+\_\+t g, uint8\+\_\+t t)
+\item 
+void \mbox{\hyperlink{classKff__file_a2e490a872f8edf592f6720b8d2d8d455}{read\+\_\+encoding}} ()
+\item 
+void \mbox{\hyperlink{classKff__file_a97e730ae3cb971bb53ca0d7953f9916b}{write\+\_\+metadata}} (uint32\+\_\+t size, char $\ast$data)
+\item 
+uint32\+\_\+t \mbox{\hyperlink{classKff__file_a4bac96f89131f3484dcca3f9da1a677f}{size\+\_\+metadata}} ()
+\item 
+void \mbox{\hyperlink{classKff__file_a3d1fa64452e5bb235d9f17c810d72179}{read\+\_\+metadata}} (uint32\+\_\+t size, char $\ast$data)
+\item 
+char \mbox{\hyperlink{classKff__file_aa1b6c391b8c3581527b72aa308b87c1b}{read\+\_\+section\+\_\+type}} ()
+\item 
+\mbox{\hyperlink{classSection__GV}{Section\+\_\+\+GV}} \mbox{\hyperlink{classKff__file_a0f43c3fc608d85e188989f79326fd253}{open\+\_\+section\+\_\+\+GV}} ()
+\item 
+\mbox{\hyperlink{classSection__Raw}{Section\+\_\+\+Raw}} \mbox{\hyperlink{classKff__file_a4ae444e9ec6f93dccfa425f01c567eb3}{open\+\_\+section\+\_\+raw}} ()
+\item 
+\mbox{\hyperlink{classSection__Minimizer}{Section\+\_\+\+Minimizer}} \mbox{\hyperlink{classKff__file_a3b2f99606af786827fc71a940bae49af}{open\+\_\+section\+\_\+minimizer}} ()
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classKff__file_a10a899c8838914f1b447361cdfe31b1f}\label{classKff__file_a10a899c8838914f1b447361cdfe31b1f}} 
+uint8\+\_\+t {\bfseries encoding} \mbox{[}4\mbox{]} = \{0, 1, 3, 2\}
+\item 
+\mbox{\Hypertarget{classKff__file_abf8a4a953983e02831c4b362202e33fd}\label{classKff__file_abf8a4a953983e02831c4b362202e33fd}} 
+uint64\+\_\+t {\bfseries k\+\_\+value} = 0
+\item 
+\mbox{\Hypertarget{classKff__file_a1a7771cbfc8a5b23f2d1d3be002c5654}\label{classKff__file_a1a7771cbfc8a5b23f2d1d3be002c5654}} 
+uint64\+\_\+t {\bfseries data\+\_\+size} = 0
+\item 
+\mbox{\Hypertarget{classKff__file_a37a9a5c1167e49d817a76d177f575e78}\label{classKff__file_a37a9a5c1167e49d817a76d177f575e78}} 
+uint64\+\_\+t {\bfseries max\+\_\+kmers} = 255
+\item 
+\mbox{\Hypertarget{classKff__file_a0311da4ea29315ceb0ec50dcbbc8d6c7}\label{classKff__file_a0311da4ea29315ceb0ec50dcbbc8d6c7}} 
+std\+::unordered\+\_\+map$<$ std\+::string, uint64\+\_\+t $>$ {\bfseries global\+\_\+vars}
+\end{DoxyCompactItemize}
+\doxysubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classKff__file_a7d041b46b8996036cf439f32d004006f}\label{classKff__file_a7d041b46b8996036cf439f32d004006f}} 
+class {\bfseries Section\+\_\+\+GV}
+\item 
+\mbox{\Hypertarget{classKff__file_ae77376705aad4334695ed7fc8a2a54b7}\label{classKff__file_ae77376705aad4334695ed7fc8a2a54b7}} 
+class {\bfseries Section\+\_\+\+Raw}
+\item 
+\mbox{\Hypertarget{classKff__file_a657193c1a3a80f03af67099c53fece84}\label{classKff__file_a657193c1a3a80f03af67099c53fece84}} 
+class {\bfseries Section\+\_\+\+Minimizer}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+This class is the central class for the low level kff file A\+PI.
+
+\mbox{\hyperlink{classKff__file}{Kff\+\_\+file}} directly contains the functions needed to create/read the kff file headers. The class also contains functions to open section objects (one per section type). 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classKff__file_a5af58e2bfc44fbc8c8cdc7e7443ef225}\label{classKff__file_a5af58e2bfc44fbc8c8cdc7e7443ef225}} 
+\index{Kff\_file@{Kff\_file}!Kff\_file@{Kff\_file}}
+\index{Kff\_file@{Kff\_file}!Kff\_file@{Kff\_file}}
+\doxysubsubsection{\texorpdfstring{Kff\_file()}{Kff\_file()}}
+{\footnotesize\ttfamily Kff\+\_\+file\+::\+Kff\+\_\+file (\begin{DoxyParamCaption}\item[{const char $\ast$}]{filename,  }\item[{const char $\ast$}]{mode }\end{DoxyParamCaption})}
+
+Open the file filename with the mode mode. mode must be choose in the set of values \{r\+: read, w\+: write\}
+
+
+\begin{DoxyParams}{Parameters}
+{\em filename} & The path to the file to construct/read. \\
+\hline
+{\em mode} & Opening mode of the file. w for writing, r for reading. \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classKff__file_ad8ebc9e009313bcce969aa171ae16bbf}\label{classKff__file_ad8ebc9e009313bcce969aa171ae16bbf}} 
+\index{Kff\_file@{Kff\_file}!close@{close}}
+\index{close@{close}!Kff\_file@{Kff\_file}}
+\doxysubsubsection{\texorpdfstring{close()}{close()}}
+{\footnotesize\ttfamily void Kff\+\_\+file\+::close (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+Close the file
+
+Physically close the file and save buffered parts to the disk if w. \mbox{\Hypertarget{classKff__file_a0f43c3fc608d85e188989f79326fd253}\label{classKff__file_a0f43c3fc608d85e188989f79326fd253}} 
+\index{Kff\_file@{Kff\_file}!open\_section\_GV@{open\_section\_GV}}
+\index{open\_section\_GV@{open\_section\_GV}!Kff\_file@{Kff\_file}}
+\doxysubsubsection{\texorpdfstring{open\_section\_GV()}{open\_section\_GV()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classSection__GV}{Section\+\_\+\+GV}} Kff\+\_\+file\+::open\+\_\+section\+\_\+\+GV (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+Create and return a \mbox{\hyperlink{classSection__GV}{Section\+\_\+\+GV}} object. This object is used to create/read the Global Variable sections.
+
+@retun An openend \mbox{\hyperlink{classSection__GV}{Section\+\_\+\+GV}} object with the same io caracteristics than the file. \mbox{\Hypertarget{classKff__file_a3b2f99606af786827fc71a940bae49af}\label{classKff__file_a3b2f99606af786827fc71a940bae49af}} 
+\index{Kff\_file@{Kff\_file}!open\_section\_minimizer@{open\_section\_minimizer}}
+\index{open\_section\_minimizer@{open\_section\_minimizer}!Kff\_file@{Kff\_file}}
+\doxysubsubsection{\texorpdfstring{open\_section\_minimizer()}{open\_section\_minimizer()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classSection__Minimizer}{Section\+\_\+\+Minimizer}} Kff\+\_\+file\+::open\+\_\+section\+\_\+minimizer (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+Create and return a \mbox{\hyperlink{classSection__Minimizer}{Section\+\_\+\+Minimizer}} object. This object is used to create/read the Minimizer kmer sections.
+
+@retun An openend \mbox{\hyperlink{classSection__Raw}{Section\+\_\+\+Raw}} object with the same io caracteristics than the file. \mbox{\Hypertarget{classKff__file_a4ae444e9ec6f93dccfa425f01c567eb3}\label{classKff__file_a4ae444e9ec6f93dccfa425f01c567eb3}} 
+\index{Kff\_file@{Kff\_file}!open\_section\_raw@{open\_section\_raw}}
+\index{open\_section\_raw@{open\_section\_raw}!Kff\_file@{Kff\_file}}
+\doxysubsubsection{\texorpdfstring{open\_section\_raw()}{open\_section\_raw()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classSection__Raw}{Section\+\_\+\+Raw}} Kff\+\_\+file\+::open\+\_\+section\+\_\+raw (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+Create and return a \mbox{\hyperlink{classSection__Raw}{Section\+\_\+\+Raw}} object. This object is used to create/read the Raw kmer sections.
+
+@retun An openend \mbox{\hyperlink{classSection__Raw}{Section\+\_\+\+Raw}} object with the same io caracteristics than the file. \mbox{\Hypertarget{classKff__file_a2e490a872f8edf592f6720b8d2d8d455}\label{classKff__file_a2e490a872f8edf592f6720b8d2d8d455}} 
+\index{Kff\_file@{Kff\_file}!read\_encoding@{read\_encoding}}
+\index{read\_encoding@{read\_encoding}!Kff\_file@{Kff\_file}}
+\doxysubsubsection{\texorpdfstring{read\_encoding()}{read\_encoding()}}
+{\footnotesize\ttfamily void Kff\+\_\+file\+::read\+\_\+encoding (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+Read encoding from file and save it to the public argument \char`\"{}encoding\char`\"{}. \mbox{\Hypertarget{classKff__file_a3d1fa64452e5bb235d9f17c810d72179}\label{classKff__file_a3d1fa64452e5bb235d9f17c810d72179}} 
+\index{Kff\_file@{Kff\_file}!read\_metadata@{read\_metadata}}
+\index{read\_metadata@{read\_metadata}!Kff\_file@{Kff\_file}}
+\doxysubsubsection{\texorpdfstring{read\_metadata()}{read\_metadata()}}
+{\footnotesize\ttfamily void Kff\+\_\+file\+::read\+\_\+metadata (\begin{DoxyParamCaption}\item[{uint32\+\_\+t}]{size,  }\item[{char $\ast$}]{data }\end{DoxyParamCaption})}
+
+Read the next size Bytes in the file and return them into the data array. This function is used to read the metadata field.
+
+
+\begin{DoxyParams}{Parameters}
+{\em size} & Size to read (in Bytes). \\
+\hline
+{\em data} & Array filled with the file content (up to size). \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classKff__file_aa1b6c391b8c3581527b72aa308b87c1b}\label{classKff__file_aa1b6c391b8c3581527b72aa308b87c1b}} 
+\index{Kff\_file@{Kff\_file}!read\_section\_type@{read\_section\_type}}
+\index{read\_section\_type@{read\_section\_type}!Kff\_file@{Kff\_file}}
+\doxysubsubsection{\texorpdfstring{read\_section\_type()}{read\_section\_type()}}
+{\footnotesize\ttfamily char Kff\+\_\+file\+::read\+\_\+section\+\_\+type (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+Read the next Byte and return it. If the file pointer is correctly aligned with the beginning of a section, this Byte is a char that represents the section type.
+
+\begin{DoxyReturn}{Returns}
+A char corresponding to the type of the following section. 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classKff__file_a4bac96f89131f3484dcca3f9da1a677f}\label{classKff__file_a4bac96f89131f3484dcca3f9da1a677f}} 
+\index{Kff\_file@{Kff\_file}!size\_metadata@{size\_metadata}}
+\index{size\_metadata@{size\_metadata}!Kff\_file@{Kff\_file}}
+\doxysubsubsection{\texorpdfstring{size\_metadata()}{size\_metadata()}}
+{\footnotesize\ttfamily uint32\+\_\+t Kff\+\_\+file\+::size\+\_\+metadata (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+Read the metadata size from the file.
+
+\begin{DoxyReturn}{Returns}
+The size in Bytes of the metadata field inside of the file 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classKff__file_a47f265434043554af03e2001f8f35779}\label{classKff__file_a47f265434043554af03e2001f8f35779}} 
+\index{Kff\_file@{Kff\_file}!write\_encoding@{write\_encoding}}
+\index{write\_encoding@{write\_encoding}!Kff\_file@{Kff\_file}}
+\doxysubsubsection{\texorpdfstring{write\_encoding()}{write\_encoding()}}
+{\footnotesize\ttfamily void Kff\+\_\+file\+::write\+\_\+encoding (\begin{DoxyParamCaption}\item[{uint8\+\_\+t}]{a,  }\item[{uint8\+\_\+t}]{c,  }\item[{uint8\+\_\+t}]{g,  }\item[{uint8\+\_\+t}]{t }\end{DoxyParamCaption})}
+
+Set the encoding used to compact the nucleotides into 2-\/bits values. Only the two lower bits of each uint8\+\_\+t will be used. The 4 2-\/bits values must be diferent to each other.
+
+
+\begin{DoxyParams}{Parameters}
+{\em a} & encoding for A or a letters. \\
+\hline
+{\em c} & encoding for C or c letters. \\
+\hline
+{\em g} & encoding for G or g letters. \\
+\hline
+{\em t} & encoding for T or t letters. \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classKff__file_a97e730ae3cb971bb53ca0d7953f9916b}\label{classKff__file_a97e730ae3cb971bb53ca0d7953f9916b}} 
+\index{Kff\_file@{Kff\_file}!write\_metadata@{write\_metadata}}
+\index{write\_metadata@{write\_metadata}!Kff\_file@{Kff\_file}}
+\doxysubsubsection{\texorpdfstring{write\_metadata()}{write\_metadata()}}
+{\footnotesize\ttfamily void Kff\+\_\+file\+::write\+\_\+metadata (\begin{DoxyParamCaption}\item[{uint32\+\_\+t}]{size,  }\item[{char $\ast$}]{data }\end{DoxyParamCaption})}
+
+Write the metadata entered by the user. Also write all the needed values like metadata section size into the file.
+
+
+\begin{DoxyParams}{Parameters}
+{\em size} & The size of data array. \\
+\hline
+{\em data} & An array of data. Can either be plain text or binary data. \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+kff\+\_\+io.\+hpp\item 
+\mbox{\hyperlink{kff__io_8cpp}{kff\+\_\+io.\+cpp}}\end{DoxyCompactItemize}

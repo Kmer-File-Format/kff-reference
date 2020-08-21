@@ -1,0 +1,81 @@
+\hypertarget{classSection__Raw}{}\doxysection{Section\+\_\+\+Raw Class Reference}
+\label{classSection__Raw}\index{Section\_Raw@{Section\_Raw}}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+uint64\+\_\+t \mbox{\hyperlink{classSection__Raw_a76c2d239f2f978c29c15b3d19c59b6c7}{read\+\_\+compacted\+\_\+sequence}} (uint8\+\_\+t $\ast$seq, uint8\+\_\+t $\ast$data)
+\item 
+void \mbox{\hyperlink{classSection__Raw_a7e2c39b5665702cd16dfd8f8d4cf57ce}{write\+\_\+compacted\+\_\+sequence}} (uint8\+\_\+t $\ast$seq, uint64\+\_\+t seq\+\_\+size, uint8\+\_\+t $\ast$data\+\_\+array)
+\item 
+void \mbox{\hyperlink{classSection__Raw_a7d62df8e3a6aa8c0a6c159fd363e598a}{close}} ()
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+uint32\+\_\+t \mbox{\hyperlink{classSection__Raw_a26cdceec56e1c960bd76beca69f7538a}{nb\+\_\+blocks}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classSection__Raw_a8b3b40e3b3bd307ad8758160886fc24b}\label{classSection__Raw_a8b3b40e3b3bd307ad8758160886fc24b}} 
+class {\bfseries Kff\+\_\+file}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classSection__Raw_a7d62df8e3a6aa8c0a6c159fd363e598a}\label{classSection__Raw_a7d62df8e3a6aa8c0a6c159fd363e598a}} 
+\index{Section\_Raw@{Section\_Raw}!close@{close}}
+\index{close@{close}!Section\_Raw@{Section\_Raw}}
+\doxysubsubsection{\texorpdfstring{close()}{close()}}
+{\footnotesize\ttfamily void Section\+\_\+\+Raw\+::close (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+Close the section. If w mode, go back to the beginning of the section to write the correct number of blocks. \mbox{\Hypertarget{classSection__Raw_a76c2d239f2f978c29c15b3d19c59b6c7}\label{classSection__Raw_a76c2d239f2f978c29c15b3d19c59b6c7}} 
+\index{Section\_Raw@{Section\_Raw}!read\_compacted\_sequence@{read\_compacted\_sequence}}
+\index{read\_compacted\_sequence@{read\_compacted\_sequence}!Section\_Raw@{Section\_Raw}}
+\doxysubsubsection{\texorpdfstring{read\_compacted\_sequence()}{read\_compacted\_sequence()}}
+{\footnotesize\ttfamily uint64\+\_\+t Section\+\_\+\+Raw\+::read\+\_\+compacted\+\_\+sequence (\begin{DoxyParamCaption}\item[{uint8\+\_\+t $\ast$}]{seq,  }\item[{uint8\+\_\+t $\ast$}]{data }\end{DoxyParamCaption})}
+
+Read the next block of the section. The sequence of the block is pushed in the seq array and the data in the data array. These arrays must be already allocated.
+
+
+\begin{DoxyParams}{Parameters}
+{\em seq} & Array filled with the compacted sequence (2 bit / nucl). \\
+\hline
+{\em data} & Array filled with data linked to the kmers of the sequence.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The number of kmers in the sequence. 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classSection__Raw_a7e2c39b5665702cd16dfd8f8d4cf57ce}\label{classSection__Raw_a7e2c39b5665702cd16dfd8f8d4cf57ce}} 
+\index{Section\_Raw@{Section\_Raw}!write\_compacted\_sequence@{write\_compacted\_sequence}}
+\index{write\_compacted\_sequence@{write\_compacted\_sequence}!Section\_Raw@{Section\_Raw}}
+\doxysubsubsection{\texorpdfstring{write\_compacted\_sequence()}{write\_compacted\_sequence()}}
+{\footnotesize\ttfamily void Section\+\_\+\+Raw\+::write\+\_\+compacted\+\_\+sequence (\begin{DoxyParamCaption}\item[{uint8\+\_\+t $\ast$}]{seq,  }\item[{uint64\+\_\+t}]{seq\+\_\+size,  }\item[{uint8\+\_\+t $\ast$}]{data\+\_\+array }\end{DoxyParamCaption})}
+
+Write a block containing the sequence seq with kmer data associated.
+
+
+\begin{DoxyParams}{Parameters}
+{\em seq} & A compacted sequence (2 bit / nucl). \\
+\hline
+{\em seq\+\_\+size} & Size of the sequence (in nucleotides). \\
+\hline
+{\em data} & Data array of the kmers in the sequence. \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{classSection__Raw_a26cdceec56e1c960bd76beca69f7538a}\label{classSection__Raw_a26cdceec56e1c960bd76beca69f7538a}} 
+\index{Section\_Raw@{Section\_Raw}!nb\_blocks@{nb\_blocks}}
+\index{nb\_blocks@{nb\_blocks}!Section\_Raw@{Section\_Raw}}
+\doxysubsubsection{\texorpdfstring{nb\_blocks}{nb\_blocks}}
+{\footnotesize\ttfamily uint32\+\_\+t Section\+\_\+\+Raw\+::nb\+\_\+blocks}
+
+The number of blocks in the section. mode r\+: filled during the construction of the object. mode w\+: Increased each time a block is added. Used on close to write the number at the beginning of the section. 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+kff\+\_\+io.\+hpp\item 
+\mbox{\hyperlink{kff__io_8cpp}{kff\+\_\+io.\+cpp}}\end{DoxyCompactItemize}

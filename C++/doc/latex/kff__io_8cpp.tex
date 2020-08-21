@@ -1,0 +1,51 @@
+\hypertarget{kff__io_8cpp}{}\doxysection{kff\+\_\+io.\+cpp File Reference}
+\label{kff__io_8cpp}\index{kff\_io.cpp@{kff\_io.cpp}}
+
+
+This file define the classes needed to create and read kff files. This file contains a low level and a high level A\+P\+Is. The \mbox{\hyperlink{classKff__file}{Kff\+\_\+file}} class is the base class for the low level A\+PI.  
+
+
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include $<$cassert$>$}\newline
+{\ttfamily \#include $<$cstring$>$}\newline
+{\ttfamily \#include $<$sstream$>$}\newline
+{\ttfamily \#include $<$math.\+h$>$}\newline
+{\ttfamily \#include $<$map$>$}\newline
+{\ttfamily \#include \char`\"{}kff\+\_\+io.\+hpp\char`\"{}}\newline
+Include dependency graph for kff\+\_\+io.\+cpp\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{kff__io_8cpp__incl}
+\end{center}
+\end{figure}
+\doxysubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{kff__io_8cpp_acf2f6fffee477c9f372f82a6b3f76fdb}\label{kff__io_8cpp_acf2f6fffee477c9f372f82a6b3f76fdb}} 
+{\footnotesize template$<$typename T $>$ }\\void {\bfseries write\+\_\+value} (T val, fstream \&fs)
+\item 
+\mbox{\Hypertarget{kff__io_8cpp_a7a685ffe0799db074c3bbc7c3bd8d3c5}\label{kff__io_8cpp_a7a685ffe0799db074c3bbc7c3bd8d3c5}} 
+{\footnotesize template$<$typename T $>$ }\\void {\bfseries read\+\_\+value} (T \&val, fstream \&fs)
+\item 
+\mbox{\Hypertarget{kff__io_8cpp_af2a8e1445111dff2bea2114330ffa827}\label{kff__io_8cpp_af2a8e1445111dff2bea2114330ffa827}} 
+uint64\+\_\+t {\bfseries bytes\+\_\+from\+\_\+bit\+\_\+array} (uint64\+\_\+t bits\+\_\+per\+\_\+elem, uint64\+\_\+t nb\+\_\+elem)
+\item 
+\mbox{\Hypertarget{kff__io_8cpp_aa7c7c2af6c602d829bff7e4cf06771e5}\label{kff__io_8cpp_aa7c7c2af6c602d829bff7e4cf06771e5}} 
+void {\bfseries leftshift8} (uint8\+\_\+t $\ast$bitarray, size\+\_\+t length, size\+\_\+t bitshift)
+\item 
+\mbox{\Hypertarget{kff__io_8cpp_a776d71e2a7d2eb2ebf95328c9ebae9dc}\label{kff__io_8cpp_a776d71e2a7d2eb2ebf95328c9ebae9dc}} 
+void {\bfseries rightshift8} (uint8\+\_\+t $\ast$bitarray, size\+\_\+t length, size\+\_\+t bitshift)
+\item 
+\mbox{\Hypertarget{kff__io_8cpp_ace62ebfd50e8fbc840eb24c12f1094ef}\label{kff__io_8cpp_ace62ebfd50e8fbc840eb24c12f1094ef}} 
+uint8\+\_\+t {\bfseries fusion8} (uint8\+\_\+t left\+\_\+bits, uint8\+\_\+t right\+\_\+bits, size\+\_\+t merge\+\_\+index)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+This file define the classes needed to create and read kff files. This file contains a low level and a high level A\+P\+Is. The \mbox{\hyperlink{classKff__file}{Kff\+\_\+file}} class is the base class for the low level A\+PI. 
+
+\begin{DoxyAuthor}{Author}
+Yoann Dufresne Contact\+: \href{mailto:yoann.dufresne0@gmail.com}{\texttt{ yoann.\+dufresne0@gmail.\+com}} 
+\end{DoxyAuthor}
