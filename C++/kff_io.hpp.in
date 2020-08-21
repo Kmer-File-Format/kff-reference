@@ -161,9 +161,25 @@ private:
 	friend class Kff_file;
 
 public:
+	/**
+	 * A map containing all the declared variables for this section.
+	 * If the file is opened in r mode, all the variables of this section have been loaded during the object construction.
+	 */
 	std::unordered_map<std::string, uint64_t> vars;
 	
+	/**
+	 * Write a variable into the file.
+	 *
+	 * @param var_name String name of the variable.
+	 * @param value The 64 bits value of the constant.
+	 *
+	 */
 	void write_var(const std::string & var_name, uint64_t value);
+	/**
+	 * Close the section.
+	 * If w mode, go back to the beginning of the section to write the correct number of variables.
+	 *
+	 */
 	void close();
 };
 
@@ -185,10 +201,39 @@ private:
 	uint32_t read_section_header();
 
 public:
+	/**
+	 * The number of blocks in the section.
+	 * mode r: filled during the construction of the object.
+	 * mode w: Increased each time a block is added. Used on close to write the number at the beginning of the section.
+	 */ 
 	uint32_t nb_blocks;
 
+	/**
+	 * Read the next block of the section.
+	 * The sequence of the block is pushed in the seq array and the data in the data array.
+	 * These arrays must be already allocated.
+	 * 
+	 * @param seq Array filled with the compacted sequence (2 bit / nucl).
+	 * @param data Array filled with data linked to the kmers of the sequence.
+	 *
+	 * @return The number of kmers in the sequence.
+	 *
+	 */
 	uint64_t read_compacted_sequence(uint8_t* seq, uint8_t* data);
+	/**
+	 * Write a block containing the sequence seq with kmer data associated.
+	 * 
+	 * @param seq A compacted sequence (2 bit / nucl).
+	 * @param seq_size Size of the sequence (in nucleotides).
+	 * @param data Data array of the kmers in the sequence.
+	 *
+	 */
 	void write_compacted_sequence(uint8_t* seq, uint64_t seq_size, uint8_t * data_array);
+	/**
+	 * Close the section.
+	 * If w mode, go back to the beginning of the section to write the correct number of blocks.
+	 *
+	 */
 	void close();
 };
 
@@ -213,14 +258,75 @@ private:
 	uint32_t read_section_header();
 
 public:
+	/**
+	 * Compacted minimizer
+	 */
 	uint8_t * minimizer;
+	/**
+	 * The number of blocks in the section.
+	 * mode r: filled during the construction of the object.
+	 * mode w: Increased each time a block is added. Used on close to write the number at the beginning of the section.
+	 */
 	uint32_t nb_blocks;
 
+	/**
+	 * Write the minimizer at the beginning of the block.
+	 * 
+	 * @param minimizer Compacted minimizer (2 bits/nucleotide)
+	 *
+	 */
 	void write_minimizer(uint8_t * minimizer);
+	/**
+	 * Write a block where the sequence is composed of the nucleotides that are not part of the minimizer.
+	 *
+	 * @param seq Sequence without the minimizer nucleotides.
+	 * @param seq_size The sequence size without its minimizer.
+	 * @param mini_pos Position where the minimizer should be inserted in the sequence.
+	 * @param data_array Array filled with data linked to the kmers of the sequence.
+	 *
+	 */
 	void write_compacted_sequence_without_mini(uint8_t* seq, uint64_t seq_size, uint64_t mini_pos, uint8_t * data_array);
+	/**
+	 * Write a block for the couple seq/data_array.
+	 * Before writing, the sequence is processed to remove the minimizer from it.
+	 *
+	 * @param seq Sequence without the minimizer nucleotides.
+	 * @param seq_size The sequence size without its minimizer.
+	 * @param mini_pos Start position of the minimizer.
+	 * @param data_array Array filled with data linked to the kmers of the sequence.
+	 *
+	 */
 	void write_compacted_sequence (uint8_t* seq, uint64_t seq_size, uint64_t mini_pos, uint8_t * data_array);
+	/**
+	 * Read the next block of the section.
+	 * The sequence of the block is pushed in the seq array and the data in the data array.
+	 * These arrays must be already allocated.
+	 * 
+	 * @param seq Array filled with the compacted sequence (2 bit / nucl) where the minimizer is absent.
+	 * @param data Array filled with data linked to the kmers of the sequence.
+	 * @param mini_pos Index of the first character of the minimizer.
+	 *
+	 * @return The number of kmers in the sequence.
+	 *
+	 */
 	uint64_t read_compacted_sequence_without_mini(uint8_t* seq, uint8_t* data, uint64_t & mini_pos);
+	/**
+	 * Read the next block of the section.
+	 * The sequence of the block is pushed in the seq array and the data in the data array.
+	 * These arrays must be already allocated.
+	 * 
+	 * @param seq Array filled with the compacted sequence (2 bit / nucl).
+	 * @param data Array filled with data linked to the kmers of the sequence.
+	 *
+	 * @return The number of kmers in the sequence.
+	 *
+	 */
 	uint64_t read_compacted_sequence(uint8_t* seq, uint8_t* data);
+	/**
+	 * Close the section.
+	 * If w mode, go back to the beginning of the section to write the correct number of blocks.
+	 *
+	 */
 	void close();
 };
 
