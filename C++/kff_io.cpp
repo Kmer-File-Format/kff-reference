@@ -29,7 +29,7 @@ uint64_t bytes_from_bit_array(uint64_t bits_per_elem, uint64_t nb_elem) {
 
 // ----- Open / Close functions -----
 
-Kff_file::Kff_file(const char * filename, const char * mode) {
+Kff_file::Kff_file(const string filename, const string mode) {
 	// Variable init
 	this->is_writer = false;
 	this->is_reader = false;
@@ -43,7 +43,7 @@ Kff_file::Kff_file(const char * filename, const char * mode) {
 		this->is_reader = true;
 		streammode |= fstream::in;
 	} else {
-		cerr << "Unsuported mode " << mode << endl;
+		cerr << "Unsupported mode " << mode << endl;
 		exit(0);
 	}
 
@@ -64,6 +64,10 @@ Kff_file::Kff_file(const char * filename, const char * mode) {
 		}
 	}
 
+}
+
+Kff_file::~Kff_file() {
+	this->close();
 }
 
 
@@ -222,17 +226,30 @@ void Section_GV::close() {
 	}
 }
 
+Block_section_reader * Block_section_reader::construct_section(char type, Kff_file * file) {
+	if (type == 'r') {
+		return new Section_Raw(file);
+	} else {
+		return new Section_Raw(file);
+	}
+}
+
 
 // ----- Raw sequence section -----
 
 Section_Raw Kff_file::open_section_raw() {
-	assert(this->global_vars.find("k") != this->global_vars.end());
-	assert(this->global_vars.find("max") != this->global_vars.end());
-	assert(this->global_vars.find("data_size") != this->global_vars.end());
-	return Section_Raw(this, this->global_vars["k"], this->global_vars["max"], this->global_vars["data_size"]);
+	return Section_Raw(this);
 }
 
-Section_Raw::Section_Raw(Kff_file * file, uint64_t k, uint64_t max, uint64_t data_size) {
+Section_Raw::Section_Raw(Kff_file * file) {
+	assert(file->global_vars.find("k") != file->global_vars.end());
+	assert(file->global_vars.find("max") != file->global_vars.end());
+	assert(file->global_vars.find("data_size") != file->global_vars.end());
+	
+	uint64_t k = file->global_vars["k"];
+	uint64_t max = file->global_vars["max"];
+	uint64_t data_size = file->global_vars["data_size"];
+
 	this->file = file;
 	this->begining = file->fs.tellp();
 	this->nb_blocks = 0;
@@ -317,14 +334,20 @@ void Section_Raw::close() {
 // ----- Minimizer sequence section -----
 
 Section_Minimizer Kff_file::open_section_minimizer() {
-	assert(this->global_vars.find("k") != this->global_vars.end());
-	assert(this->global_vars.find("m") != this->global_vars.end());
-	assert(this->global_vars.find("max") != this->global_vars.end());
-	assert(this->global_vars.find("data_size") != this->global_vars.end());
-	return Section_Minimizer(this, this->global_vars["k"], this->global_vars["m"], this->global_vars["max"], this->global_vars["data_size"]);
+	return Section_Minimizer(this);
 }
 
-Section_Minimizer::Section_Minimizer(Kff_file * file, uint64_t k, uint64_t m, uint64_t max, uint64_t data_size) {
+Section_Minimizer::Section_Minimizer(Kff_file * file) {
+	assert(file->global_vars.find("k") != file->global_vars.end());
+	assert(file->global_vars.find("m") != file->global_vars.end());
+	assert(file->global_vars.find("max") != file->global_vars.end());
+	assert(file->global_vars.find("data_size") != file->global_vars.end());
+	
+	uint64_t k = file->global_vars["k"];
+	uint64_t m = file->global_vars["m"];
+	uint64_t max = file->global_vars["max"];
+	uint64_t data_size = file->global_vars["data_size"];
+
 	this->file = file;
 	this->begining = file->fs.tellp();
 	this->nb_blocks = 0;
@@ -554,7 +577,7 @@ uint64_t Section_Minimizer::read_compacted_sequence(uint8_t* seq, uint8_t* data)
 void Section_Minimizer::close() {
 	if (file->is_writer) {
 		// Save current position
-		fstream &	 fs = this->file->fs;
+		fstream &	fs = this->file->fs;
 		long position = fs.tellp();
 		// Go write the number of variables in the correct place
 		fs.seekp(this->begining + 1 + this->nb_bytes_mini);
@@ -566,6 +589,53 @@ void Section_Minimizer::close() {
 
 
 
+
+
+// -------- Start of the high level API -----------
+
+Kff_reader::Kff_reader(std::string filename) {
+	// Open the file
+	this->file = new Kff_file(filename, "r");
+	// REad the encoding
+	this->file->read_encoding();
+	// Jump over metadata
+	uint32_t size = this->file->size_metadata();
+	auto & fp = this->file->fs;
+	fp.seekp(fp.tellp() + static_cast<long int>(size));
+
+	this->current_section = NULL;
+	read_until_first_section_block();
+}
+
+Kff_reader::~Kff_reader() {
+	delete this->file;
+}
+
+void Kff_reader::read_until_first_section_block() {
+	while (current_section == NULL) {
+		char section_type = this->file->read_section_type();
+		if (section_type == 'v')
+			file->open_section_GV();
+		else
+			current_section = Block_section_reader::construct_section(section_type, file);
+	}
+}
+
+bool Kff_reader::has_next() {
+	if (current_section == NULL and !file->fs.eof())
+		read_until_first_section_block();
+	return !file->fs.eof();
+}
+
+uint8_t * Kff_reader::next_kmer() {
+	if (!this->has_next())
+		return NULL;
+
+	// TODO
+	remaining_kmers = current_section->read_compacted_sequence(current_sequence, current_data);
+	// TODO
+	return current_kmer;
+}
 
 
 

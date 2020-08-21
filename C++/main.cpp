@@ -13,23 +13,23 @@ string decode_sequence(uint8_t * encoded, size_t size);
 
 int main(int argc, char * argv[]) {
 	// --- header writing ---
-	Kff_file file = Kff_file("test.kff", "w");
+	Kff_file * file = new Kff_file("test.kff", "w");
 	// Set encoding   A  C  G  T
-	file.write_encoding(0, 1, 3, 2);
+	file->write_encoding(0, 1, 3, 2);
 	// Set metadata
-	file.write_metadata(11, "D@rK W@99ic");
+	file->write_metadata(11, "D@rK W@99ic");
 
 	// --- global variable write ---
 
 	// Set global variables
-	Section_GV sgv = file.open_section_GV();
+	Section_GV sgv = file->open_section_GV();
 	sgv.write_var("k", 10);
 	sgv.write_var("max", 240);
 	sgv.write_var("data_size", 1);
 	sgv.close();
 
 	// --- Write a raw sequence bloc ---
-	Section_Raw sr = file.open_section_raw();
+	Section_Raw sr = file->open_section_raw();
 	// 2-bit sequence encoder
 	uint8_t encoded[1024];
 	uint8_t counts[255];
@@ -44,12 +44,12 @@ int main(int argc, char * argv[]) {
 	sr.write_compacted_sequence(encoded, 11, counts);
 	sr.close();
 
-	sgv = file.open_section_GV();
+	sgv = file->open_section_GV();
 	sgv.write_var("m", 8);
 	sgv.close();
 
 	// --- write a minimizer sequence block ---
-	Section_Minimizer sm = file.open_section_minimizer();
+	Section_Minimizer sm = file->open_section_minimizer();
 	encode_sequence("AAACTGAT", 8, encoded);
 	sm.write_minimizer(encoded);
 
@@ -65,30 +65,31 @@ int main(int argc, char * argv[]) {
 
 	sm.close();
 
-	// Close and end writing of the file.
-	file.close();
+	// Close and end writing of the file
+	file->close();
+	delete file;
 
 
 
 	// --- header reading ---
-	file = Kff_file("test.kff", "r");
-	file.read_encoding();
+	file = new Kff_file("test.kff", "r");
+	file->read_encoding();
 	char metadata[1024];
-	uint32_t size = file.size_metadata();
-	file.read_metadata(size, metadata);
+	uint32_t size = file->size_metadata();
+	file->read_metadata(size, metadata);
 
 	// --- Global variable read ---
-	char section_name = file.read_section_type();
-	sgv = file.open_section_GV();
+	char section_name = file->read_section_type();
+	sgv = file->open_section_GV();
 
-	uint64_t k = file.global_vars["k"];
-	uint64_t max = file.global_vars["max"];
-	uint64_t data_size = file.global_vars["data_size"];
+	uint64_t k = file->global_vars["k"];
+	uint64_t max = file->global_vars["max"];
+	uint64_t data_size = file->global_vars["data_size"];
 
 	// --- Read Raw Block ---
-	section_name = file.read_section_type();
+	section_name = file->read_section_type();
 	cout << "Read section " << section_name << endl;
-	sr = file.open_section_raw();
+	sr = file->open_section_raw();
 	cout << "nb blocks: " << sr.nb_blocks << endl;
 
 	uint8_t * seq = new uint8_t((max + k) / 8 + 1);
@@ -105,14 +106,14 @@ int main(int argc, char * argv[]) {
 	cout << endl;
 
 	// --- Read variables to load m ---
-	section_name = file.read_section_type();
+	section_name = file->read_section_type();
 	cout << "Read section " << section_name << endl;
-	sgv = file.open_section_GV();
-	uint64_t m = file.global_vars["m"];
+	sgv = file->open_section_GV();
+	uint64_t m = file->global_vars["m"];
 	cout << endl;
 
 	// --- Read Minimizer block ---
-	sm = file.open_section_minimizer();
+	sm = file->open_section_minimizer();
 	cout << "Minimizer: " << decode_sequence(sm.minimizer, m) << endl;
 
 	for (auto i=0 ; i<sm.nb_blocks ; i++) {
@@ -128,8 +129,13 @@ int main(int argc, char * argv[]) {
 	}
 	cout << endl;
 
-	file.close();
+	file->close();
+	delete file;
 
+
+
+	// ----- High Level API reader -----
+	Kff_reader * reader = new Kff_reader("test.kff");
 }
 
 

@@ -24,6 +24,8 @@ class Section_GV;
 class Section_Raw;
 class Section_Minimizer;
 
+class Kff_reader;
+
 /**
  * This class is the central class for the low level kff file API.
  *
@@ -44,6 +46,7 @@ private:
 	friend class Section_GV;
 	friend class Section_Raw;
 	friend class Section_Minimizer;
+	friend class Kff_reader;
 
 public:
 	// encoding:           A  C  T  G
@@ -62,7 +65,11 @@ public:
 	 * @param mode Opening mode of the file. w for writing, r for reading.
    *
 	 */
-	Kff_file(const char * filename, const char * mode);
+	Kff_file(const std::string filename, const std::string mode);
+	/**
+	 * Destroy properly a Kff object, closing the file behind it.
+	 */
+	~Kff_file();
 	/** 
 	 * Close the file
 	 *
@@ -147,6 +154,10 @@ public:
 };
 
 
+/**
+ * File manipulator for Global Variable sections.
+ *
+ */
 class Section_GV {
 private:
 	Kff_file * file;
@@ -183,21 +194,44 @@ public:
 	void close();
 };
 
+class Block_section_reader {
+// private:
+// 	friend class Section_Raw;
+public:
+	static Block_section_reader * construct_section(char type, Kff_file * file);
+	/**
+	 * Read the next block of the section.
+	 * The sequence of the block is pushed in the seq array and the data in the data array.
+	 * These arrays must be already allocated.
+	 * 
+	 * @param seq Array filled with the compacted sequence (2 bit / nucl).
+	 * @param data Array filled with data linked to the kmers of the sequence.
+	 *
+	 * @return The number of kmers in the sequence.
+	 *
+	 */
+	virtual uint64_t read_compacted_sequence(uint8_t* seq, uint8_t* data) {return 0;}
+};
 
-class Section_Raw {
+/**
+ * File manipulator for Raw sections.
+ *
+ */
+class Section_Raw: public Block_section_reader {
 private:
 	Kff_file * file;
 	long begining;
 	bool is_closed;
 
 	friend class Kff_file;
+	friend class Block_section_reader;
 
 	uint64_t k;
 	uint64_t max;
 	uint64_t data_size;
 	uint8_t nb_kmers_bytes;
 
-	Section_Raw(Kff_file * file, uint64_t k, uint64_t max, uint64_t data_size);
+	Section_Raw(Kff_file * file);
 	uint32_t read_section_header();
 
 public:
@@ -238,7 +272,11 @@ public:
 };
 
 
-class Section_Minimizer {
+/**
+ * File manipulator for Minimizer sections.
+ *
+ */
+class Section_Minimizer: public Block_section_reader {
 private:
 	Kff_file * file;
 	long begining;
@@ -254,7 +292,7 @@ private:
 	uint8_t nb_kmers_bytes;
 	uint8_t mini_pos_bytes;
 
-	Section_Minimizer(Kff_file * file, uint64_t k, uint64_t m, uint64_t max, uint64_t data_size);
+	Section_Minimizer(Kff_file * file);
 	uint32_t read_section_header();
 
 public:
@@ -328,6 +366,26 @@ public:
 	 *
 	 */
 	void close();
+};
+
+
+class Kff_reader {
+private:
+	Kff_file * file;
+	uint8_t * current_kmer;
+	uint8_t * current_sequence;
+	uint64_t remaining_kmers;
+	uint8_t * current_data;
+	Block_section_reader * current_section;
+
+	void read_until_first_section_block();
+
+public:
+	Kff_reader(std::string filename);
+	~Kff_reader();
+
+	bool has_next();
+	uint8_t * next_kmer();
 };
 
 
