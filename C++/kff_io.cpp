@@ -227,10 +227,11 @@ void Section_GV::close() {
 }
 
 Block_section_reader * Block_section_reader::construct_section(char type, Kff_file * file) {
+	cout << "Type " << type << endl;
 	if (type == 'r') {
 		return new Section_Raw(file);
 	} else {
-		return new Section_Raw(file);
+		return new Section_Minimizer(file);
 	}
 }
 
@@ -603,8 +604,12 @@ Kff_reader::Kff_reader(std::string filename) {
 	auto & fp = this->file->fs;
 	fp.seekp(fp.tellp() + static_cast<long int>(size));
 
-	this->current_section = NULL;
-	read_until_first_section_block();
+	// Create fake small datastrucutes waiting for the right values.
+	this->current_shifts = new uint8_t*[4];
+	for (uint8_t i=0 ; i<4 ; i++)
+		this->current_shifts[i] = new uint8_t[1];
+	this->current_sequence = this->current_shifts[0];
+	this->current_data = new uint8_t[1];
 }
 
 Kff_reader::~Kff_reader() {
@@ -612,12 +617,59 @@ Kff_reader::~Kff_reader() {
 }
 
 void Kff_reader::read_until_first_section_block() {
-	while (current_section == NULL) {
+	while (current_section == NULL or remaining_blocks == 0) {
 		char section_type = this->file->read_section_type();
-		if (section_type == 'v')
-			file->open_section_GV();
-		else
+		// --- Update data structure sizes ---
+		if (section_type == 'v') {
+			// Read the global variable block
+			auto gvs = file->open_section_GV();
+			// Update sequence size if k or max change
+			if (gvs.vars.find("k") != gvs.vars.end()
+				or gvs.vars.find("max") != gvs.vars.end()) {
+				// Compute the max size of a sequence
+				auto k = this->file->global_vars["k"];
+				auto max = this->file->global_vars["max"];
+				uint64_t max_size = bytes_from_bit_array(2, max + k - 1);
+				// Allocate the right amount of memory and place the pointers to the right addresses
+				for (uint8_t i=0 ; i<4 ; i++) {
+					delete this->current_shifts[i];
+					this->current_shifts[i] = new uint8_t[max_size];
+				}
+				this->current_sequence = this->current_shifts[0];
+			}
+
+			// Update the data array size
+			if (gvs.vars.find("data_size") != gvs.vars.end()
+				or gvs.vars.find("max") != gvs.vars.end()) {
+				// Compute the max size of a data array
+				auto data_size = this->file->global_vars["data_size"];
+				auto max = this->file->global_vars["max"];
+				uint64_t max_size = data_size * max;
+				delete this->current_data;
+				this->current_data = new uint8_t[max_size];
+			}
+		}
+		// Mount data from the files to the datastructures.
+		else {
 			current_section = Block_section_reader::construct_section(section_type, file);
+			remaining_blocks = current_section->nb_blocks;
+		}
+	}
+}
+
+void Kff_reader::read_next_block() {
+	// Read from the file
+	remaining_kmers = current_section->read_compacted_sequence(current_sequence, current_data);
+	uint64_t nb_nucleotides = remaining_kmers + current_section->k - 1;
+	uint64_t seq_bytes = bytes_from_bit_array(2, nb_nucleotides);
+	current_seq_bytes = seq_bytes;
+
+	// Create the 4 possible shifts of the sequence for easy use.
+	for (uint8_t i=1 ; i<4 ; i++) {
+		// Copy
+		memcpy(current_shifts[i], current_sequence, seq_bytes);
+		// Shift
+		rightshift8(current_shifts[i], seq_bytes, 2 * i);
 	}
 }
 
@@ -628,12 +680,31 @@ bool Kff_reader::has_next() {
 }
 
 uint8_t * Kff_reader::next_kmer() {
-	if (!this->has_next())
+	// Verify the abylity to find another kmer in the file.
+	if (!this->has_next()){
 		return NULL;
+	}
 
-	// TODO
-	remaining_kmers = current_section->read_compacted_sequence(current_sequence, current_data);
-	// TODO
+	// Load the next block
+	if (remaining_kmers == 0) {
+		read_next_block();
+	}
+
+	// Determine where is the kmer
+	uint64_t shift_version = (remaining_kmers - 1) % 4;
+	uint64_t end_byte = current_seq_bytes - (remaining_kmers - 1) / 4;
+	uint64_t first_byte = end_byte - (current_section->k-1) / 4;
+	// Copy the correct kmer into current kmer array
+	memcpy(current_kmer, current_shifts[shift_version]+first_byte, end_byte-first_byte+1);
+	remaining_kmers -= 1;
+
+	// Read the next block if needed.
+	if (remaining_kmers == 0)
+		if (remaining_blocks == 0)
+			current_section = NULL;
+		else
+			read_next_block();
+
 	return current_kmer;
 }
 

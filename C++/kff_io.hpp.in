@@ -195,9 +195,22 @@ public:
 };
 
 class Block_section_reader {
-// private:
-// 	friend class Section_Raw;
+protected:
+	uint64_t k;
+	uint64_t max;
+	uint64_t data_size;
+	uint8_t nb_kmers_bytes;
+
+	friend class Kff_reader;
+
 public:
+	/**
+	 * The number of blocks in the section.
+	 * mode r: filled during the construction of the object.
+	 * mode w: Increased each time a block is added. Used on close to write the number at the beginning of the section.
+	 */
+	uint32_t nb_blocks;
+
 	static Block_section_reader * construct_section(char type, Kff_file * file);
 	/**
 	 * Read the next block of the section.
@@ -226,21 +239,10 @@ private:
 	friend class Kff_file;
 	friend class Block_section_reader;
 
-	uint64_t k;
-	uint64_t max;
-	uint64_t data_size;
-	uint8_t nb_kmers_bytes;
-
 	Section_Raw(Kff_file * file);
 	uint32_t read_section_header();
 
 public:
-	/**
-	 * The number of blocks in the section.
-	 * mode r: filled during the construction of the object.
-	 * mode w: Increased each time a block is added. Used on close to write the number at the beginning of the section.
-	 */ 
-	uint32_t nb_blocks;
 
 	/**
 	 * Read the next block of the section.
@@ -283,13 +285,10 @@ private:
 	bool is_closed;
 
 	friend class Kff_file;
+	friend class Block_section_reader;
 
-	uint64_t k;
-	uint64_t m;
+	uint8_t m;
 	uint8_t nb_bytes_mini;
-	uint64_t max;
-	uint64_t data_size;
-	uint8_t nb_kmers_bytes;
 	uint8_t mini_pos_bytes;
 
 	Section_Minimizer(Kff_file * file);
@@ -300,12 +299,6 @@ public:
 	 * Compacted minimizer
 	 */
 	uint8_t * minimizer;
-	/**
-	 * The number of blocks in the section.
-	 * mode r: filled during the construction of the object.
-	 * mode w: Increased each time a block is added. Used on close to write the number at the beginning of the section.
-	 */
-	uint32_t nb_blocks;
 
 	/**
 	 * Write the minimizer at the beginning of the block.
@@ -372,13 +365,25 @@ public:
 class Kff_reader {
 private:
 	Kff_file * file;
+	// Space alocated for copying the current kmer given to the user.
 	uint8_t * current_kmer;
+	// Current sequence
 	uint8_t * current_sequence;
+	// Current sequence shifted to match the 4 different alignements
+	uint8_t ** current_shifts;
+	// Size in bytes of current sequence
+	uint64_t current_seq_bytes;
+	// Number of kmer remaining in the current block
 	uint64_t remaining_kmers;
+	// Data array for the current block
 	uint8_t * current_data;
+	// Section currently readed.
 	Block_section_reader * current_section;
+	// Remaining blocks before end of the section
+	uint64_t remaining_blocks;
 
 	void read_until_first_section_block();
+	void read_next_block();
 
 public:
 	Kff_reader(std::string filename);

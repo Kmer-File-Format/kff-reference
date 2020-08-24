@@ -136,6 +136,12 @@ int main(int argc, char * argv[]) {
 
 	// ----- High Level API reader -----
 	Kff_reader * reader = new Kff_reader("test.kff");
+
+	uint64_t i = 0;
+	while (reader->has_next()) {
+		uint8_t * kmer = reader->next_kmer();
+		cout << (i++) << endl;
+	}
 }
 
 
