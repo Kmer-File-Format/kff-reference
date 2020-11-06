@@ -83,7 +83,7 @@ Example:
 * Encoding 0x2d == 0b00101101, so A=0, C=2, G=3, T=1
 * 12 Bytes in the free section
 * ascii -> "Hello world!"
-`
+
 # Sections
 
 The main part of the file is a succession of sections.

@@ -139,8 +139,10 @@ int main(int argc, char * argv[]) {
 
 	uint64_t i = 0;
 	while (reader->has_next()) {
-		uint8_t * kmer = reader->next_kmer();
-		cout << (i++) << endl;
+		uint8_t * kmer;
+		uint8_t * data;
+		reader->next_kmer(&kmer, &data);
+		cout << (i++) << " " << decode_sequence(kmer, k) << " " << (uint)*data << endl;
 	}
 }
 

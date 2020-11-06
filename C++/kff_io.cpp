@@ -227,7 +227,7 @@ void Section_GV::close() {
 }
 
 Block_section_reader * Block_section_reader::construct_section(char type, Kff_file * file) {
-	cout << "Type " << type << endl;
+	// cout << "Type " << type << endl;
 	if (type == 'r') {
 		return new Section_Raw(file);
 	} else {
@@ -439,6 +439,7 @@ uint64_t Section_Minimizer::read_compacted_sequence_without_mini(uint8_t* seq, u
 	// 4 - Read the data
 	uint64_t data_bytes_needed = bytes_from_bit_array(data_size*8, nb_kmers_in_block);
 	file->fs.read((char*)data, data_bytes_needed);
+	// cout << data_bytes_needed << endl;
 	return nb_kmers_in_block;
 }
 
@@ -597,7 +598,7 @@ void Section_Minimizer::close() {
 Kff_reader::Kff_reader(std::string filename) {
 	// Open the file
 	this->file = new Kff_file(filename, "r");
-	// REad the encoding
+	// Read the encoding
 	this->file->read_encoding();
 	// Jump over metadata
 	uint32_t size = this->file->size_metadata();
@@ -619,6 +620,8 @@ Kff_reader::~Kff_reader() {
 void Kff_reader::read_until_first_section_block() {
 	while (current_section == NULL or remaining_blocks == 0) {
 		char section_type = this->file->read_section_type();
+		if (section_type == 0 and file->fs.eof())
+			break;
 		// --- Update data structure sizes ---
 		if (section_type == 'v') {
 			// Read the global variable block
@@ -659,18 +662,20 @@ void Kff_reader::read_until_first_section_block() {
 
 void Kff_reader::read_next_block() {
 	// Read from the file
-	remaining_kmers = current_section->read_compacted_sequence(current_sequence, current_data);
-	uint64_t nb_nucleotides = remaining_kmers + current_section->k - 1;
-	uint64_t seq_bytes = bytes_from_bit_array(2, nb_nucleotides);
-	current_seq_bytes = seq_bytes;
+	current_seq_kmers = remaining_kmers = current_section->read_compacted_sequence(current_sequence, current_data);
+	current_seq_nucleotides = remaining_kmers + current_section->k - 1;
+	current_seq_bytes = bytes_from_bit_array(2, current_seq_nucleotides);
 
 	// Create the 4 possible shifts of the sequence for easy use.
 	for (uint8_t i=1 ; i<4 ; i++) {
 		// Copy
-		memcpy(current_shifts[i], current_sequence, seq_bytes);
+		memcpy(current_shifts[i], current_sequence, current_seq_bytes);
 		// Shift
-		rightshift8(current_shifts[i], seq_bytes, 2 * i);
+		rightshift8(current_shifts[i], current_seq_bytes, 2 * i);
+		// cout << (uint64_t)current_shifts[i] << endl;
 	}
+
+	// cout << "/shift" << endl << endl;
 }
 
 bool Kff_reader::has_next() {
@@ -679,10 +684,12 @@ bool Kff_reader::has_next() {
 	return !file->fs.eof();
 }
 
-uint8_t * Kff_reader::next_kmer() {
+void Kff_reader::next_kmer(uint8_t ** kmer, uint8_t ** data) {
 	// Verify the abylity to find another kmer in the file.
 	if (!this->has_next()){
-		return NULL;
+		kmer = NULL;
+		data = NULL;
+		return;
 	}
 
 	// Load the next block
@@ -690,22 +697,23 @@ uint8_t * Kff_reader::next_kmer() {
 		read_next_block();
 	}
 
-	// Determine where is the kmer
-	uint64_t shift_version = (remaining_kmers - 1) % 4;
-	uint64_t end_byte = current_seq_bytes - (remaining_kmers - 1) / 4;
-	uint64_t first_byte = end_byte - (current_section->k-1) / 4;
-	// Copy the correct kmer into current kmer array
-	memcpy(current_kmer, current_shifts[shift_version]+first_byte, end_byte-first_byte+1);
-	remaining_kmers -= 1;
+	uint64_t right_shift = (remaining_kmers - 1) % 4;
+	uint64_t end_byte = current_seq_bytes - (remaining_kmers / 4) - 1;
+
+	uint64_t prefix_offset_idx = (4 - (current_seq_nucleotides % 4)) % 4;
+	uint64_t start_byte = (prefix_offset_idx + current_seq_kmers - remaining_kmers + right_shift) / 4;
+
+	memcpy(current_kmer, current_shifts[right_shift]+start_byte, end_byte-start_byte+1);
+	*kmer = current_kmer;
+	*data = current_data + (current_seq_kmers - remaining_kmers) * this->file->global_vars["data_size"];
 
 	// Read the next block if needed.
-	if (remaining_kmers == 0)
+	remaining_kmers -= 1;
+	if (remaining_kmers == 0) {
+		remaining_blocks -= 1;
 		if (remaining_blocks == 0)
 			current_section = NULL;
-		else
-			read_next_block();
-
-	return current_kmer;
+	}
 }
 
 
