@@ -76,8 +76,6 @@ void Kff_file::close() {
 		this->fs.close();
 	this->is_writer = false;
 	this->is_reader = false;
-
-	cout << endl;
 }
 
 
@@ -139,7 +137,7 @@ void Kff_file::read_metadata(uint32_t size, char * data) {
 // ----- Sections -----
 
 char Kff_file::read_section_type() {
-	char type;
+	char type = '\0';
 	this->fs >> type;
 	this->fs.seekp(this->fs.tellp() - 1l);
 	return type;
@@ -364,6 +362,7 @@ Section_Minimizer::Section_Minimizer(Kff_file * file) {
 	this->nb_kmers_bytes = static_cast<uint8_t>(bytes_from_bit_array(nb_bits, 1));
 	this->nb_bytes_mini = static_cast<uint8_t>(bytes_from_bit_array(2, m));
 	this->minimizer = new uint8_t[nb_bytes_mini];
+	memset(this->minimizer, 0, nb_bytes_mini);
 	uint64_t mini_pos_bits = static_cast<uint8_t>(ceil(log2(k+max-1)));
 	this->mini_pos_bytes = bytes_from_bit_array(mini_pos_bits, 1);
 
@@ -509,7 +508,7 @@ void Section_Minimizer::write_compacted_sequence (uint8_t* seq, uint64_t seq_siz
 	// Write the compacted sequence into file.
 	this->write_compacted_sequence_without_mini(seq, seq_size-m, mini_pos, data_array);
 
-	delete seq_copy;
+	delete[] seq_copy;
 }
 
 uint64_t Section_Minimizer::read_compacted_sequence(uint8_t* seq, uint8_t* data) {
@@ -571,8 +570,8 @@ uint64_t Section_Minimizer::read_compacted_sequence(uint8_t* seq, uint8_t* data)
 
 	rightshift8(seq, seq_bytes, (8 - 2 * (seq_size % 4)) % 8);
 
-	delete suffix;
-	delete mini_shifted;
+	delete[] suffix;
+	delete[] mini_shifted;
 	return nb_kmers_in_block;
 }
 
@@ -607,10 +606,16 @@ Kff_reader::Kff_reader(std::string filename) {
 
 	// Create fake small datastrucutes waiting for the right values.
 	this->current_shifts = new uint8_t*[4];
-	for (uint8_t i=0 ; i<4 ; i++)
+	for (uint8_t i=0 ; i<4 ; i++) {
 		this->current_shifts[i] = new uint8_t[1];
+		this->current_shifts[0] = 0;
+	}
 	this->current_sequence = this->current_shifts[0];
 	this->current_data = new uint8_t[1];
+
+	this->current_section = NULL;
+	this->current_kmer = new uint8_t[1];
+	this->remaining_kmers = 0;
 }
 
 Kff_reader::~Kff_reader() {
@@ -619,9 +624,11 @@ Kff_reader::~Kff_reader() {
 
 void Kff_reader::read_until_first_section_block() {
 	while (current_section == NULL or remaining_blocks == 0) {
-		char section_type = this->file->read_section_type();
-		if (section_type == 0 and file->fs.eof())
-			break;
+		// char section_type = this->file->read_section_type();
+		char section_type = file->read_section_type();
+		if (section_type == 0)
+			if (this->file->fs.eof())
+				break;
 		// --- Update data structure sizes ---
 		if (section_type == 'v') {
 			// Read the global variable block
@@ -635,10 +642,13 @@ void Kff_reader::read_until_first_section_block() {
 				uint64_t max_size = bytes_from_bit_array(2, max + k - 1);
 				// Allocate the right amount of memory and place the pointers to the right addresses
 				for (uint8_t i=0 ; i<4 ; i++) {
-					delete this->current_shifts[i];
+					delete[] this->current_shifts[i];
 					this->current_shifts[i] = new uint8_t[max_size];
 				}
 				this->current_sequence = this->current_shifts[0];
+
+				delete[] this->current_kmer;
+				this->current_kmer = new uint8_t[k/4 + 1];
 			}
 
 			// Update the data array size
@@ -648,7 +658,7 @@ void Kff_reader::read_until_first_section_block() {
 				auto data_size = this->file->global_vars["data_size"];
 				auto max = this->file->global_vars["max"];
 				uint64_t max_size = data_size * max;
-				delete this->current_data;
+				delete[] this->current_data;
 				this->current_data = new uint8_t[max_size];
 			}
 		}

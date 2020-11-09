@@ -8,6 +8,7 @@ configure_file(kff_io.hpp.in kff_io.hpp)
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+# set(CMAKE_BUILD_TYPE Debug)
 
 # add the executable
 add_executable(kff_example main.cpp kff_io.cpp)

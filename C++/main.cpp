@@ -92,8 +92,8 @@ int main(int argc, char * argv[]) {
 	sr = file->open_section_raw();
 	cout << "nb blocks: " << sr.nb_blocks << endl;
 
-	uint8_t * seq = new uint8_t((max + k) / 8 + 1);
-	uint8_t * data = new uint8_t(max * data_size);
+	uint8_t * seq = new uint8_t[(max + k) / 8 + 1];
+	uint8_t * data = new uint8_t[max * data_size];
 	for (auto i=0 ; i<sr.nb_blocks ; i++) {
 		cout << "bloc " << (i+1) << ": ";
 		uint32_t nb_kmers = sr.read_compacted_sequence(seq, data);
