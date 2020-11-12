@@ -8,7 +8,7 @@
 using namespace std;
 
 
-void encode_sequence(char * sequence, size_t size, uint8_t * encoded);
+void encode_sequence(std::string sequence, uint8_t * encoded);
 string decode_sequence(uint8_t * encoded, size_t size);
 
 int main(int argc, char * argv[]) {
@@ -17,7 +17,8 @@ int main(int argc, char * argv[]) {
 	// Set encoding   A  C  G  T
 	file->write_encoding(0, 1, 3, 2);
 	// Set metadata
-	file->write_metadata(11, "D@rK W@99ic");
+	std::string meta = "D@rK W@99ic";
+	file->write_metadata(11, (uint8_t *)meta.c_str());
 
 	// --- global variable write ---
 
@@ -33,13 +34,13 @@ int main(int argc, char * argv[]) {
 	// 2-bit sequence encoder
 	uint8_t encoded[1024];
 	uint8_t counts[255];
-	encode_sequence("ACTAAACTGATT", 12, encoded);
+	encode_sequence("ACTAAACTGATT", encoded);
 	counts[0]=32;counts[1]=47;counts[2]=1;
 	sr.write_compacted_sequence(encoded, 12, counts);
-	encode_sequence("AAACTGATCG", 10, encoded);
+	encode_sequence("AAACTGATCG", encoded);
 	counts[0]=12;
 	sr.write_compacted_sequence(encoded, 10, counts);
-	encode_sequence("CTAAACTGATT", 11, encoded);
+	encode_sequence("CTAAACTGATT", encoded);
 	counts[0]=1;counts[1]=47;
 	sr.write_compacted_sequence(encoded, 11, counts);
 	sr.close();
@@ -50,16 +51,16 @@ int main(int argc, char * argv[]) {
 
 	// --- write a minimizer sequence block ---
 	Section_Minimizer sm = file->open_section_minimizer();
-	encode_sequence("AAACTGAT", 8, encoded);
+	encode_sequence("AAACTGAT", encoded);
 	sm.write_minimizer(encoded);
 
-	encode_sequence("ACTAAACTGATT", 12, encoded);
+	encode_sequence("ACTAAACTGATT", encoded);
 	counts[0]=32;counts[1]=47;counts[2]=1;
 	sm.write_compacted_sequence(encoded, 12, 3, counts);
-	encode_sequence("AAACTGATCG", 10, encoded);
+	encode_sequence("AAACTGATCG", encoded);
 	counts[0]=12;
 	sm.write_compacted_sequence(encoded, 10, 0, counts);
-	encode_sequence("CTAAACTGATT", 11, encoded);
+	encode_sequence("CTAAACTGATT", encoded);
 	counts[0]=1;counts[1]=47;
 	sm.write_compacted_sequence(encoded, 11, 2, counts);
 
@@ -74,7 +75,7 @@ int main(int argc, char * argv[]) {
 	// --- header reading ---
 	file = new Kff_file("test.kff", "r");
 	file->read_encoding();
-	char metadata[1024];
+	uint8_t metadata[1024];
 	uint32_t size = file->size_metadata();
 	file->read_metadata(size, metadata);
 
@@ -94,12 +95,12 @@ int main(int argc, char * argv[]) {
 
 	uint8_t * seq = new uint8_t[(max + k) / 8 + 1];
 	uint8_t * data = new uint8_t[max * data_size];
-	for (auto i=0 ; i<sr.nb_blocks ; i++) {
+	for (uint64_t i=0 ; i<sr.nb_blocks ; i++) {
 		cout << "bloc " << (i+1) << ": ";
 		uint32_t nb_kmers = sr.read_compacted_sequence(seq, data);
 		cout << nb_kmers << " kmers : ";
 		cout << decode_sequence(seq, nb_kmers + k - 1) << " - ";
-		for (auto i=0 ; i<nb_kmers ; i++)
+		for (uint64_t i=0 ; i<nb_kmers ; i++)
 			cout << (uint64_t)data[i] << ", ";
 		cout << endl;
 	}
@@ -116,14 +117,14 @@ int main(int argc, char * argv[]) {
 	sm = file->open_section_minimizer();
 	cout << "Minimizer: " << decode_sequence(sm.minimizer, m) << endl;
 
-	for (auto i=0 ; i<sm.nb_blocks ; i++) {
+	for (uint64_t i=0 ; i<sm.nb_blocks ; i++) {
 		cout << "bloc " << (i+1) << ": ";
-		uint64_t mini_pos;
+		// uint64_t mini_pos;
 		// uint32_t nb_kmers = sm.read_compacted_sequence_without_mini(seq, data, mini_pos);
 		uint32_t nb_kmers = sm.read_compacted_sequence(seq, data);
 		cout << nb_kmers << " kmers : ";
 		cout << decode_sequence(seq, nb_kmers + k - 1) << " - ";
-		for (auto i=0 ; i<nb_kmers ; i++)
+		for (uint64_t i=0 ; i<nb_kmers ; i++)
 			cout << (uint64_t)data[i] << ", ";
 		cout << endl;
 	}
@@ -150,22 +151,24 @@ int main(int argc, char * argv[]) {
 
 // ---- DNA encoding functions [ACTG] -----
 
-uint8_t uint8_packing(char * sequence, size_t size);
+uint8_t uint8_packing(std::string sequence);
 /* Encode the sequence into an array of uint8_t packed sequence slices.
  * The encoded sequences are organised in big endian order.
  */
-void encode_sequence(char * sequence, size_t size, uint8_t * encoded) {
+void encode_sequence(std::string sequence, uint8_t * encoded) {
+	size_t size = sequence.length();
 	// Encode the truncated first 8 bits sequence
 	size_t remnant = size % 4;
 	if (remnant > 0) {
-		encoded[0] = uint8_packing(sequence, remnant);
+		encoded[0] = uint8_packing(sequence.substr(0, remnant));
 		encoded += 1;
 	}
 
 	// Encode all the 8 bits packed
 	size_t nb_uint_needed = size / 4;
 	for (size_t i=0 ; i<nb_uint_needed ; i++) {
-		encoded[i] = uint8_packing(sequence + remnant + (i<<2), 4);
+		encoded[i] = uint8_packing(sequence.substr(remnant + 4*i, 4));
+		// encoded[i] = uint8_packing(sequence + remnant + (i<<2), 4);
 	}
 }
 
@@ -173,7 +176,8 @@ void encode_sequence(char * sequence, size_t size, uint8_t * encoded) {
  * Encoding ACTG
  * Size must be <= 4
  */
-uint8_t uint8_packing(char * sequence, size_t size) {
+uint8_t uint8_packing(std::string sequence) {
+	size_t size = sequence.length();
 	assert(size <= 4);
 
 	uint8_t val = 0;

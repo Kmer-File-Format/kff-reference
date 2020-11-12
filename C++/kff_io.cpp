@@ -118,9 +118,9 @@ void Kff_file::read_encoding() {
 	assert(g != t);
 }
 
-void Kff_file::write_metadata(uint32_t size, char * data) {
+void Kff_file::write_metadata(uint32_t size, const uint8_t * data) {
 	write_value(size, fs);
-	this->fs.write(data, size);
+	this->fs.write((char *)data, size);
 }
 
 uint32_t Kff_file::size_metadata() {
@@ -129,8 +129,8 @@ uint32_t Kff_file::size_metadata() {
 	return meta_size;
 }
 
-void Kff_file::read_metadata(uint32_t size, char * data) {
-	this->fs.read(data, size);
+void Kff_file::read_metadata(uint32_t size, uint8_t * data) {
+	this->fs.read((char *)data, size);
 }
 
 
@@ -186,7 +186,7 @@ void Section_GV::read_section() {
 	assert(type == 'v');
 
 	read_value(this->nb_vars, file->fs);
-	for (auto i=0 ; i<nb_vars ; i++) {
+	for (uint64_t i=0 ; i<nb_vars ; i++) {
 		this->read_var();
 	}
 }
@@ -550,7 +550,7 @@ uint64_t Section_Minimizer::read_compacted_sequence(uint8_t* seq, uint8_t* data)
 	}
 
 	seq[byte_mini_stop] = fusion8(seq[byte_mini_stop], suffix[0], offset_mini_stop);
-	for (auto i=1 ; i<nb_bytes_suffix_used ; i++) {
+	for (uint64_t i=1 ; i<nb_bytes_suffix_used ; i++) {
 		seq[byte_mini_stop+i] = suffix[i];
 	}
 
@@ -562,7 +562,7 @@ uint64_t Section_Minimizer::read_compacted_sequence(uint8_t* seq, uint8_t* data)
 	rightshift8(mini_shifted, this->nb_bytes_mini+1, offset_mini_start);
 	// Add the minimizer inside the sequence
 	seq[byte_mini_start] = fusion8(seq[byte_mini_start], mini_shifted[0], offset_mini_start);
-	for (auto i=1 ; i<byte_mini_stop-byte_mini_start ; i++) {
+	for (uint64_t i=1 ; i<byte_mini_stop-byte_mini_start ; i++) {
 		seq[byte_mini_start+i] = mini_shifted[i];
 	}
 

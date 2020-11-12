@@ -10,6 +10,8 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 # set(CMAKE_BUILD_TYPE Debug)
 
+set(CMAKE_CXX_FLAGS "-Wall")
+
 set(SRCS
   kff_io.cpp
   )

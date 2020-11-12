@@ -102,7 +102,7 @@ public:
 	 * @param data An array of data. Can either be plain text or binary data.
 	 *
 	 */
-	void write_metadata(uint32_t size, char * data);
+	void write_metadata(uint32_t size, const uint8_t * data);
 	/**
 	 * Read the metadata size from the file.
 	 *
@@ -118,7 +118,7 @@ public:
 	 * @param data Array filled with the file content (up to size).
 	 *
 	 */
-	void read_metadata(uint32_t size, char * data);
+	void read_metadata(uint32_t size, uint8_t * data);
 
 
 	// --- general section ---
