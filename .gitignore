@@ -4,6 +4,9 @@ CMakeFiles/
 Makefile
 
 *.bak
+*.a
+*.d
+*.o
 
 kff_example
 test.kff

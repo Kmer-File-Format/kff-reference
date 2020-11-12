@@ -10,5 +10,15 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 # set(CMAKE_BUILD_TYPE Debug)
 
+set(SRCS
+  kff_io.cpp
+  )
+
+set(HEADERS
+  kff_io.hpp
+  )
+
 # add the executable
-add_executable(kff_example main.cpp kff_io.cpp)
+add_executable(kff_example main.cpp ${SRCS} ${HEADERS})
+
+add_library(kff ${SRCS} ${HEADERS})
