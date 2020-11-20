@@ -48,7 +48,7 @@ A text like this:
 ```
 2bit(ACTG)
 ```
-repersents the sequence ACTG in 2 bit encoding describe in header
+repersents the sequence ACTG in 2 bit encoding describe in header. Big endian byte order.
 
 # File header
 
