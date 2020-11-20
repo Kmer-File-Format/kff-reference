@@ -224,6 +224,17 @@ public:
 	 *
 	 */
 	virtual uint64_t read_compacted_sequence(uint8_t* seq, uint8_t* data) {return 0;}
+	/**
+	 * Jumb over the next block of the section.
+	 */
+	virtual void jump_sequence() {}
+	/**
+	 * Jump over the full section
+	 */
+	void jump_section() {
+		for (uint i=0 ; i<nb_blocks ; i++)
+			this->jump_sequence();
+	}
 };
 
 /**
@@ -265,6 +276,10 @@ public:
 	 *
 	 */
 	void write_compacted_sequence(uint8_t* seq, uint64_t seq_size, uint8_t * data_array);
+	/**
+	 * Jumb over the next block of the section.
+	 */
+	void jump_sequence();
 	/**
 	 * Close the section.
 	 * If w mode, go back to the beginning of the section to write the correct number of blocks.
@@ -353,6 +368,10 @@ public:
 	 *
 	 */
 	uint64_t read_compacted_sequence(uint8_t* seq, uint8_t* data);
+	/**
+	 * Jumb over the next block of the section.
+	 */
+	void jump_sequence();
 	/**
 	 * Close the section.
 	 * If w mode, go back to the beginning of the section to write the correct number of blocks.
