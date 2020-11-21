@@ -150,6 +150,12 @@ public:
 	 * @retun An openend Section_Raw object with the same io caracteristics than the file.
 	 */
 	Section_Minimizer open_section_minimizer();
+	/**
+	 * Jump over the next section if it is section containing kmers.
+	 *
+	 * @return True if a section is skipped, false if the section can't be skipped, eof is reached or the file is not read ready.
+	 */
+	bool jump_next_section();
 };
 
 

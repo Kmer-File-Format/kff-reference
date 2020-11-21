@@ -133,6 +133,20 @@ void Kff_file::read_metadata(uint32_t size, uint8_t * data) {
 	this->fs.read((char *)data, size);
 }
 
+bool Kff_file::jump_next_section() {
+	if (not is_reader)
+		return false;
+	char section_type = read_section_type();
+	if (fs.eof())
+		return false;
+	if (section_type == 'r' or section_type == 'm') {
+		Block_section_reader * section = Block_section_reader::construct_section(section_type, this);
+		section->jump_section();
+		return true;
+	}
+	return false;
+}
+
 
 // ----- Sections -----
 
