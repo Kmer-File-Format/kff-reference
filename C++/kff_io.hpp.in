@@ -418,6 +418,7 @@ public:
 	~Kff_reader();
 
 	bool has_next();
+	uint64_t next_block(uint8_t ** sequence, uint8_t ** data);
 	void next_kmer(uint8_t ** sequence, uint8_t ** data);
 };
 

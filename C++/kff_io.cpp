@@ -740,6 +740,28 @@ bool Kff_reader::has_next() {
 	return !file->fs.eof();
 }
 
+uint64_t Kff_reader::next_block(uint8_t ** sequence, uint8_t ** data) {
+	// Verify the abylity to find another kmer in the file.
+	if (!this->has_next()){
+		sequence = NULL;
+		data = NULL;
+		return 0;
+	}
+
+	read_next_block();
+	
+	*sequence = current_sequence;
+	*data = current_data;
+
+	auto nb_kmers = remaining_kmers;
+	remaining_kmers = 0;
+	remaining_blocks -= 1;
+	if (remaining_blocks == 0)
+		current_section = NULL;
+
+	return nb_kmers;
+}
+
 void Kff_reader::next_kmer(uint8_t ** kmer, uint8_t ** data) {
 	// Verify the abylity to find another kmer in the file.
 	if (!this->has_next()){
