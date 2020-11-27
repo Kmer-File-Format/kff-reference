@@ -424,4 +424,8 @@ public:
 };
 
 
+
+void leftshift8(uint8_t * bitarray, size_t length, size_t bitshift);
+void rightshift8(uint8_t * bitarray, size_t length, size_t bitshift);
+
 #endif
