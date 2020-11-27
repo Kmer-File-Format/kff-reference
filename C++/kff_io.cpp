@@ -316,9 +316,10 @@ void Section_Raw::write_compacted_sequence(uint8_t* seq, uint64_t seq_size, uint
 }
 
 uint64_t Section_Raw::read_compacted_sequence(uint8_t* seq, uint8_t* data) {
-	uint64_t nb_kmers_in_block = 0;
+	uint64_t nb_kmers_in_block = 1;
 	// 1 - Read the number of kmers in the sequence
-	file->fs.read((char*)&nb_kmers_in_block, this->nb_kmers_bytes);
+	if (nb_kmers_bytes != 0)
+		file->fs.read((char*)&nb_kmers_in_block, this->nb_kmers_bytes);
 	// 2 - Read the sequence
 	size_t seq_size = nb_kmers_in_block + k - 1;
 	size_t seq_bytes_needed = bytes_from_bit_array(2, seq_size);
@@ -331,9 +332,10 @@ uint64_t Section_Raw::read_compacted_sequence(uint8_t* seq, uint8_t* data) {
 
 
 void Section_Raw::jump_sequence() {
-	uint64_t nb_kmers_in_block = 0;
+	uint64_t nb_kmers_in_block = 1;
 	// 1 - Read the number of kmers in the sequence
-	file->fs.read((char*)&nb_kmers_in_block, this->nb_kmers_bytes);
+	if (nb_kmers_bytes != 0)
+		file->fs.read((char*)&nb_kmers_in_block, this->nb_kmers_bytes);
 	// 2 - Determine the sequence size
 	size_t seq_size = nb_kmers_in_block + k - 1;
 	size_t seq_bytes_needed = bytes_from_bit_array(2, seq_size);
@@ -453,9 +455,10 @@ void Section_Minimizer::write_compacted_sequence_without_mini(uint8_t* seq, uint
 }
 
 uint64_t Section_Minimizer::read_compacted_sequence_without_mini(uint8_t* seq, uint8_t* data, uint64_t & mini_pos) {
-	uint64_t nb_kmers_in_block = 0;
+	uint64_t nb_kmers_in_block = 1;
 	// 1 - Read the number of kmers in the sequence
-	file->fs.read((char*)&nb_kmers_in_block, this->nb_kmers_bytes);
+	if (nb_kmers_bytes != 0)
+		file->fs.read((char*)&nb_kmers_in_block, this->nb_kmers_bytes);
 	// 2 - Read the minimizer position
 	uint64_t tmp_mini_pos = 0;
 	file->fs.read((char *)&tmp_mini_pos, this->mini_pos_bytes);
@@ -472,9 +475,10 @@ uint64_t Section_Minimizer::read_compacted_sequence_without_mini(uint8_t* seq, u
 }
 
 void Section_Minimizer::jump_sequence() {
-	uint64_t nb_kmers_in_block = 0;
+	uint64_t nb_kmers_in_block = 1;
 	// 1 - Read the number of kmers in the sequence
-	file->fs.read((char*)&nb_kmers_in_block, this->nb_kmers_bytes);
+	if (nb_kmers_bytes != 0)
+		file->fs.read((char*)&nb_kmers_in_block, this->nb_kmers_bytes);
 	// 2 - Read the minimizer position
 	uint64_t tmp_mini_pos = 0;
 	file->fs.read((char *)&tmp_mini_pos, this->mini_pos_bytes);
