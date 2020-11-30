@@ -74,10 +74,11 @@ int main(int argc, char * argv[]) {
 
 	// --- header reading ---
 	file = new Kff_file("test.kff", "r");
-	file->read_encoding();
-	uint8_t metadata[1024];
-	uint32_t size = file->size_metadata();
-	file->read_metadata(size, metadata);
+	uint8_t * metadata = new uint8_t[file->metadata_size + 1];
+	file->read_metadata(metadata);
+	metadata[file->metadata_size] = '\0';
+	cout << "metadata: " << string((char *)metadata) << endl << endl;
+	delete[] metadata;
 
 	// --- Global variable read ---
 	char section_name = file->read_section_type();
@@ -145,6 +146,8 @@ int main(int argc, char * argv[]) {
 		reader->next_kmer(&kmer, &data);
 		cout << (i++) << " " << decode_sequence(kmer, k) << " " << (uint)*data << endl;
 	}
+
+	delete reader;
 }
 
 

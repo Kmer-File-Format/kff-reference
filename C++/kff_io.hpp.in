@@ -38,6 +38,9 @@ private:
 	bool is_writer;
 	bool is_reader;
 
+	// True when the header have been read/write and the fs pointer is after.
+	bool header_over;
+
 	uint8_t major_version;
 	uint8_t minor_version;
 
@@ -46,6 +49,16 @@ private:
 	friend class Section_Minimizer;
 	friend class Kff_reader;
 
+	/**
+	 * Read encoding from file and save it to the public argument "encoding".
+	 */
+	void read_encoding();
+
+	/**
+	 * Read the metadata size from the file and save the value in metadate_size.
+	 */
+	void read_size_metadata();
+
 public:
 	std::fstream fs;
 	// encoding:        A:0  C:1 G:3 T:2
@@ -53,6 +66,8 @@ public:
 	uint64_t k_value = 0;
 	uint64_t data_size = 0;
 	uint64_t max_kmers = 255;
+	
+	uint32_t metadata_size = 0;
 
 	std::unordered_map<std::string, uint64_t> global_vars;
 
@@ -89,10 +104,13 @@ public:
 	 */
 	void write_encoding(uint8_t a, uint8_t c, uint8_t g, uint8_t t);
 	/**
-	 * Read encoding from file and save it to the public argument "encoding".
+	 * Set the encoding used to compact the nucleotides into 2-bits values.
+	 * Only the two lower bits of each uint8_t will be used.
+	 * The 4 2-bits values must be diferent to each other.
 	 *
+	 * @param encoding An array that must contains the 4 encoding values in order A, C, G and T.
 	 */
-	void read_encoding();
+	void write_encoding(uint8_t * encoding);
 	/**
 	 * Write the metadata entered by the user.
 	 * Also write all the needed values like metadata section size into the file.
@@ -103,21 +121,18 @@ public:
 	 */
 	void write_metadata(uint32_t size, const uint8_t * data);
 	/**
-	 * Read the metadata size from the file.
-	 *
-	 * @return The size in Bytes of the metadata field inside of the file
-	 *
-	 */
-	uint32_t size_metadata();
-	/**
 	 * Read the next size Bytes in the file and return them into the data array.
 	 * This function is used to read the metadata field.
+	 * The size of the metadata is saved in the metadata_size field.
 	 *
-	 * @param size Size to read (in Bytes).
 	 * @param data Array filled with the file content (up to size).
 	 *
 	 */
-	void read_metadata(uint32_t size, uint8_t * data);
+	void read_metadata(uint8_t * data);
+	/**
+	 * Function called to complete a header reading or writing before the first section io
+	 */
+	void complete_header();
 
 
 	// --- general section ---

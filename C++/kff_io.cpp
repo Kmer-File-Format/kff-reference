@@ -49,6 +49,7 @@ Kff_file::Kff_file(const string filename, const string mode) {
 
 	// Open the file
 	this->fs.open(filename, streammode);
+	this->header_over = false;
 
 	// Write the version at the beginning of the file
 	if (this->is_writer) {
@@ -62,12 +63,33 @@ Kff_file::Kff_file(const string filename, const string mode) {
 		if (KFF_VERSION_MAJOR < this->major_version or (KFF_VERSION_MAJOR == this->major_version and KFF_VERSION_MINOR < this->minor_version)) {
 			cerr << "The software version " << KFF_VERSION_MAJOR << "." << KFF_VERSION_MINOR << " can't read files writen in version " << this->major_version << "." << this->minor_version << endl;
 		}
-	}
 
+		this->read_encoding();
+		this->read_size_metadata();
+	}
 }
+
 
 Kff_file::~Kff_file() {
 	this->close();
+}
+
+
+void Kff_file::complete_header() {
+	if (this->header_over)
+		return;
+
+	// If the metadata has not been read, jump over
+	if (this->is_reader) {
+		this->fs.seekp(this->fs.tellp() + (long)this->metadata_size);
+	}
+
+	// If metadata has not been write, write a 0 byte one.
+	else if (this->is_writer) {
+		this->write_metadata(0, nullptr);
+	}
+
+	this->header_over = true;
 }
 
 
@@ -101,6 +123,10 @@ void Kff_file::write_encoding(uint8_t a, uint8_t c, uint8_t g, uint8_t t) {
 	this->fs << code;
 }
 
+void Kff_file::write_encoding(uint8_t * encoding) {
+	this->write_encoding(encoding[0], encoding[1], encoding[2], encoding[3]);
+}
+
 void Kff_file::read_encoding() {
 	uint8_t code, a, c, g, t;
 	// Get code values
@@ -121,16 +147,16 @@ void Kff_file::read_encoding() {
 void Kff_file::write_metadata(uint32_t size, const uint8_t * data) {
 	write_value(size, fs);
 	this->fs.write((char *)data, size);
+	this->header_over = true;
 }
 
-uint32_t Kff_file::size_metadata() {
-	uint32_t meta_size;
-	read_value(meta_size, fs);
-	return meta_size;
+void Kff_file::read_size_metadata() {
+	read_value(this->metadata_size, fs);
 }
 
-void Kff_file::read_metadata(uint32_t size, uint8_t * data) {
-	this->fs.read((char *)data, size);
+void Kff_file::read_metadata(uint8_t * data) {
+	this->fs.read((char *)data, this->metadata_size);
+	this->header_over = true;
 }
 
 bool Kff_file::jump_next_section() {
@@ -151,6 +177,11 @@ bool Kff_file::jump_next_section() {
 // ----- Sections -----
 
 char Kff_file::read_section_type() {
+	// Verify that header has been read.
+	if (not this->header_over) {
+		this->complete_header();
+	}
+
 	char type = '\0';
 	this->fs >> type;
 	this->fs.seekp(this->fs.tellp() - 1l);
@@ -161,6 +192,11 @@ char Kff_file::read_section_type() {
 // ----- Global variables sections -----
 
 Section_GV Kff_file::open_section_GV() {
+	// Verify that header has been read.
+	if (not this->header_over) {
+		this->complete_header();
+	}
+
 	return Section_GV(this);
 }
 
@@ -239,6 +275,9 @@ void Section_GV::close() {
 }
 
 Block_section_reader * Block_section_reader::construct_section(char type, Kff_file * file) {
+	// Very and complete if needed the header
+	file->complete_header();
+
 	// cout << "Type " << type << endl;
 	if (type == 'r') {
 		return new Section_Raw(file);
@@ -643,12 +682,6 @@ void Section_Minimizer::close() {
 Kff_reader::Kff_reader(std::string filename) {
 	// Open the file
 	this->file = new Kff_file(filename, "r");
-	// Read the encoding
-	this->file->read_encoding();
-	// Jump over metadata
-	uint32_t size = this->file->size_metadata();
-	auto & fp = this->file->fs;
-	fp.seekp(fp.tellp() + static_cast<long int>(size));
 
 	// Create fake small datastrucutes waiting for the right values.
 	this->current_shifts = new uint8_t*[4];
