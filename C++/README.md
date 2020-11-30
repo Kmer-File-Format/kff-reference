@@ -40,7 +40,7 @@ This is the object needed to manipulate a binary kff file.
 
 ## File reader
 
-### Header
+### Header
 
 When you open a file to read it, the software version is automatically read and compared to the file version.
 The software version must be equal or greater than the file version.
