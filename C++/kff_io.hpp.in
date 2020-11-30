@@ -230,8 +230,9 @@ public:
 	 * mode w: Increased each time a block is added. Used on close to write the number at the beginning of the section.
 	 */
 	uint32_t nb_blocks;
+	uint32_t remaining_blocks;
 
-	static Block_section_reader * construct_section(char type, Kff_file * file);
+	static Block_section_reader * construct_section(Kff_file * file);
 	/**
 	 * Read the next block of the section.
 	 * The sequence of the block is pushed in the seq array and the data in the data array.
@@ -252,7 +253,7 @@ public:
 	 * Jump over the full section
 	 */
 	void jump_section() {
-		for (uint i=0 ; i<nb_blocks ; i++)
+		while (this->remaining_blocks > 0)
 			this->jump_sequence();
 	}
 };

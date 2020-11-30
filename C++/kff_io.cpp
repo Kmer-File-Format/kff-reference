@@ -166,7 +166,7 @@ bool Kff_file::jump_next_section() {
 	if (fs.eof())
 		return false;
 	if (section_type == 'r' or section_type == 'm') {
-		Block_section_reader * section = Block_section_reader::construct_section(section_type, this);
+		Block_section_reader * section = Block_section_reader::construct_section(this);
 		section->jump_section();
 		return true;
 	}
@@ -274,16 +274,17 @@ void Section_GV::close() {
 	}
 }
 
-Block_section_reader * Block_section_reader::construct_section(char type, Kff_file * file) {
+Block_section_reader * Block_section_reader::construct_section(Kff_file * file) {
 	// Very and complete if needed the header
 	file->complete_header();
 
-	// cout << "Type " << type << endl;
+	char type = file->read_section_type();
 	if (type == 'r') {
 		return new Section_Raw(file);
-	} else {
+	} else if (type == 'm') {
 		return new Section_Minimizer(file);
-	}
+	} else
+		return nullptr;
 }
 
 
@@ -334,9 +335,10 @@ uint32_t Section_Raw::read_section_header() {
 	fs >> type;
 	assert(type == 'r');
 
-	read_value(nb_blocks, fs);
+	read_value(this->nb_blocks, fs);
+	this->remaining_blocks = this->nb_blocks;
 
-	return nb_blocks;
+	return this->nb_blocks;
 }
 
 void Section_Raw::write_compacted_sequence(uint8_t* seq, uint64_t seq_size, uint8_t * data_array) {
@@ -365,6 +367,9 @@ uint64_t Section_Raw::read_compacted_sequence(uint8_t* seq, uint8_t* data) {
 	// 3 - Read the data.
 	uint64_t data_bytes_used = bytes_from_bit_array(data_size*8, nb_kmers_in_block);
 	file->fs.read((char*)data, data_bytes_used);
+
+	this->remaining_blocks -= 1;
+
 	return nb_kmers_in_block;
 }
 
@@ -380,6 +385,7 @@ void Section_Raw::jump_sequence() {
 	size_t data_bytes_used = bytes_from_bit_array(data_size*8, nb_kmers_in_block);
 	// 4 - Jumb over the 
 	file->fs.seekp(file->fs.tellp() + (long)(seq_bytes_needed + data_bytes_used));
+	this->remaining_blocks -= 1;
 }
 
 
@@ -393,6 +399,12 @@ void Section_Raw::close() {
 		write_value(nb_blocks, fs);
 		fs.seekp(position);
 		this->is_closed = true;
+	}
+
+	if (file->is_reader) {
+		// Jump over remaining sequences of the section
+		while (this->remaining_blocks > 0)
+			this->jump_sequence();
 	}
 }
 
@@ -471,6 +483,7 @@ uint32_t Section_Minimizer::read_section_header() {
 
 	// Read the number of following blocks
 	read_value(nb_blocks, fs);
+	this->remaining_blocks = this->nb_blocks;
 	return nb_blocks;
 }
 
@@ -507,6 +520,8 @@ uint64_t Section_Minimizer::read_compacted_sequence_without_mini(uint8_t* seq, u
 	uint64_t data_bytes_needed = bytes_from_bit_array(data_size*8, nb_kmers_in_block);
 	file->fs.read((char*)data, data_bytes_needed);
 	// cout << data_bytes_needed << endl;
+
+	this->remaining_blocks -= 1;
 	return nb_kmers_in_block;
 }
 
@@ -524,6 +539,8 @@ void Section_Minimizer::jump_sequence() {
 	size_t data_bytes_used = bytes_from_bit_array(data_size*8, nb_kmers_in_block);
 	// 4 - Jumb over the 
 	file->fs.seekp(file->fs.tellp() + (long)(seq_bytes_needed + data_bytes_used));
+
+	this->remaining_blocks -= 1;
 }
 
 
@@ -743,7 +760,7 @@ void Kff_reader::read_until_first_section_block() {
 		}
 		// Mount data from the files to the datastructures.
 		else {
-			current_section = Block_section_reader::construct_section(section_type, file);
+			current_section = Block_section_reader::construct_section(file);
 			remaining_blocks = current_section->nb_blocks;
 		}
 	}
