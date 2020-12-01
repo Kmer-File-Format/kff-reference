@@ -20,7 +20,9 @@ Documentation not yet available
 
 # Low level API
 
-## Open/close a kff file
+## File reader
+
+### Open/close a file
 
 Kff_file is the main object in the library.
 This is the object needed to manipulate a binary kff file.
@@ -30,15 +32,7 @@ This is the object needed to manipulate a binary kff file.
   Kff_file infile("path/to/file/myfile.kff", "r");
   // [...]
   infile.close();
-
-  // Open a kff file to write inside of it.
-  // Path/to/file/ must exist prior to opening.
-  Kff_file outfile("path/to/file/myfile.kff", "w");
-  // [...]
-  outfile.close();
 ```
-
-## File reader
 
 ### Header
 
@@ -193,8 +187,152 @@ These sections are created using a static function that returns a nullptr if the
 
 ### Skipping blocks or sections
 
+For some reasons, you may want to jump over a block inside of a reading section or over a complete section.
+For that, we create a dedicated function for each:
+
+```C++
+  // Construct a block reader
+  Block_section_reader * br = Block_section_reader::construct_section(infile);
+  // Skip a block inside of a reader
+  br.jump_sequence();
+  br.close();
+
+  // jump over a complete section
+  bool jumped = infile.jump_next_section();
+  // [...] jumped == false if no section can be jumped
+```
+
 
 ## File writer
 
+### Open/close a file
 
+To open a kff file in writing mode, just put the 'w' flag at construction.
+NB: All the directories of the path to the file that you want to create must already exist.
+
+```C++
+  // Open a kff file to write inside of it.
+  // Path/to/file/ must exist prior to opening.
+  Kff_file outfile("path/to/file/myfile.kff", "w");
+  // [...]
+  outfile.close();
+```
+
+### Header
+
+The header first contains the kff file version. This 2 Bytes value is automatically added by the API at the beginning of the file.
+Then you have to write the encoding that you use using one of the *write_encoding* functions.
+If you want, you can finish the header by adding some metadata (Byte array format).
+If you do not set any metadata, the API will automatically create a 0 Byte metadata field.
+
+```C++
+  //                    A  C  G  T
+  uint8_t encoding[] = {0, 1, 3, 2};
+  // Encoding writing alternative 1
+  outfile.write_encoding(encoding);
+  // Encoding writing alternative 2
+  // outfile.write_encoding(0, 1, 3, 2);
+
+  // Write metadata
+  std::string meta_str = "<3 KFF <3";
+  outfile.write_metadata(meta_str.length(), (uint8_t *)meta.c_str());
+```
+
+
+### Global Variable section
+
+GV sections start with the number of variables described in it.
+Initially this value is automatically set to 0 and updated when you call the close function.
+
+```C++
+  // Open the section
+  Section_GV sgv = outfile.open_section_GV();
+  
+  // Write all the values needed
+  sgv.write_var("k", 7);
+  sgv.write_var("m", 3);
+  sgv.write_var("max", 8);
+  sgv.write_var("data_size", 1);
+
+  sgv.close();
+```
+
+
+### String sequences to binary
+
+This API does not provide any function to transform a DNA string into a byte array coding for the binary sequence.
+To see how to properly encode a sequence, please refer to the kmer file format reference.
+
+For the following parts, we assume that your code include a function *encode* that take a string and return a uint8_t \* with the correct format.
+
+
+### Raw sequences section
+
+As in the GV section, the raw section starts with a number of blocks that is automatically set by the API on closing.
+To write raw sections, you just have to use the *write_compacted_sequence*.
+This function take the byte array for your 2-bits nucleotidic sequence and a byte array for their related data.
+
+Prior to raw section writings, do not forget to write the variables needed (cf kff reference).
+
+```C++
+  // Open the raw section
+  Section_Raw sr = outfile.open_section_raw();
+
+  std::string sequence;
+  uint8_t counts[8];
+  uint8_t * byte_seq;
+
+  // Encode one kmer
+  sequence = "GATTACA";
+  uint8_t * byte_seq = encode(sequence);
+  counts[0] = 3;
+  // Write the 7-mer
+  sr.write_compacted_sequence(byte_seq, sequence.length(), counts);
+
+  // Encode 8 overlapping 7-mers: TGGTACA, GGTACAA, GTACAAG, ...
+  sequence = "TGGTACAAGTTACC";
+  counts[0]=1; counts[1]=221; counts[2]=7; counts[3]=1;
+  counts[4]=5; counts[5]=6; counts[6]=12; counts[7]=198;
+  sr.write_compacted_sequence(byte_seq, sequence.length(), counts);
+
+  sr.close();
+```
+
+
+### Minimizer sequences section
+
+In the minimizer section, everything is very similar to the raw sequences.
+At the beginning of the section, you need to write the minimizer using the method *write_minimizer*.
+To write a block, you only need one more piece of information than for a row block, which is the index where the minimizer is present in the sequence.
+
+```C++
+  // Open the raw section
+  Section_Minimizer sm = outfile.open_section_minimizer();
+
+  std::string sequence;
+  uint8_t counts[8];
+  uint8_t * byte_seq;
+
+  // Write the minimizer
+  byte_seq = encode("ACA");
+  sm.write_minimizer(byte_seq);
+
+  // Encode one kmer
+  sequence = "GATTACA";
+  //              ^ minimizer (pos = 3)
+  uint8_t * byte_seq = encode(sequence);
+  counts[0] = 3;
+  // Write the 7-mer
+  sm.write_compacted_sequence(byte_seq, sequence.length(), 3, counts);
+  //                                    minimizer position ^
+
+  // Encode 8 overlapping 7-mers: TGGTACA, GGTACAA, GTACAAG, ...
+  sequence = "TGGTACAAGTTACC";
+  //              ^ minimizer (pos = 3)
+  counts[0]=1; counts[1]=221; counts[2]=7; counts[3]=1;
+  counts[4]=5; counts[5]=6; counts[6]=12; counts[7]=198;
+  sm.write_compacted_sequence(byte_seq, sequence.length(), 3, counts);
+
+  sm.close();
+```
 
