@@ -688,6 +688,12 @@ void Section_Minimizer::close() {
 		fs.seekp(position);
 		this->is_closed = true;
 	}
+
+	if (file->is_reader) {
+		// Jump over remaining sequences of the section
+		while (this->remaining_blocks > 0)
+			this->jump_sequence();
+	}
 }
 
 
