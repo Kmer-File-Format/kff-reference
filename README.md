@@ -99,6 +99,8 @@ This kind of section can be seen as a zone of global scope variable definition.
 The other sections need the definition of some variables (the k value for example).
 A list of needed values for other sections is given in their documentation.
 The variables are pairs of name/value where names are ascii texts ended with a '\0' character and values are 64 bits fields.
+A varible can be define a multiple time accros the file.
+The value to take into acount at a certain point of the file is the last value encountered.
 
 Section values:
 * type: char 'v' (1 Byte)
