@@ -718,6 +718,8 @@ Kff_reader::Kff_reader(std::string filename) {
 	this->current_section = NULL;
 	this->current_kmer = new uint8_t[1];
 	this->remaining_kmers = 0;
+
+	this->has_next();
 }
 
 Kff_reader::~Kff_reader() {
@@ -851,7 +853,20 @@ void Kff_reader::next_kmer(uint8_t ** kmer, uint8_t ** data) {
 }
 
 
+uint64_t Kff_reader::get_var(string name) {
+	if (file->global_vars.find(name) != file->global_vars.end())
+		return file->global_vars[name];
 
+	cerr << "Variable " << name << " is absent from the file." << endl;
+	exit(2);
+
+	return 0;
+}
+
+
+uint8_t * Kff_reader::get_encoding() {
+	return file->encoding;
+}
 
 
 

@@ -404,6 +404,7 @@ public:
 
 class Kff_reader {
 private:
+	Kff_file * file;
 	// Space alocated for copying the current kmer given to the user.
 	uint8_t * current_kmer;
 	// Current sequence
@@ -429,7 +430,6 @@ private:
 	void read_next_block();
 
 public:
-	Kff_file * file;
 	
 	Kff_reader(std::string filename);
 	~Kff_reader();
@@ -437,6 +437,9 @@ public:
 	bool has_next();
 	uint64_t next_block(uint8_t ** sequence, uint8_t ** data);
 	void next_kmer(uint8_t ** sequence, uint8_t ** data);
+
+	uint64_t get_var(std::string name);
+	uint8_t * get_encoding();
 };
 
 

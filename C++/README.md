@@ -15,7 +15,59 @@ It means that if you use the functions in the wrong order, you can write wrong k
 
 # High level reader API
 
-Documentation not yet available
+## Enumerating kmers
+
+The high level reader API is made to be very easy to use.
+This part of the API allow you to enumerate each pair of kmer / data through the whole file, hiding all the kff datastructures.
+
+The HL API contains 2 main functions:
+- *has_next* to know if the enumeration is over or not.
+- *next_kmer* that return the next available kmer and its data.
+NB: the kmer and data pointer are valid until you use again one of the two functions.
+
+```C++
+  Kff_reader reader("test.kff");
+
+  uint8_t * kmer;
+  uint8_t * data;
+
+  while (reader.has_next()) {
+    reader.next_kmer(&kmer, &data);
+    //[...] use the kmer and its data
+  }
+```
+
+## Enumerating blocks
+
+If you prefer to enumerate kmers by block instead of one by one, you can use the function *next_block*.
+
+```C++
+  Kff_reader reader("test.kff");
+
+  uint8_t * kmers;
+  uint8_t * data;
+
+  while (reader.has_next()) {
+    uint64_t nb_kmers = reader.next_block(&kmers, &data);
+    //[...] use the kmers and their associated data
+  }
+```
+
+
+## How to know properties of my kmers ?
+
+To use the kmers and their data, you need to know some values like k or data_size.
+These values of any variable are accessible through the *get_var* method.
+You also need to know the encoding used to translate you data from 2-bits to strings.
+The *get_encoding* function return an array of the 4 encoded values in order A, C, G, T.
+
+```C++
+  // Get the file encoding
+  uint8_t * encoding = reader.get_encoding();
+  // Get the current k and data_size values
+  uint64_t k = reader.get_var("k");
+  uint64_t ds = reader.get_var("data_size");
+```
 
 
 # Low level API
@@ -319,16 +371,16 @@ To write a block, you only need one more piece of information than for a row blo
 
   // Encode one kmer
   sequence = "GATTACA";
-  //              ^ minimizer (pos = 3)
+  //              ^ minimizer (pos = 4)
   uint8_t * byte_seq = encode(sequence);
   counts[0] = 3;
   // Write the 7-mer
-  sm.write_compacted_sequence(byte_seq, sequence.length(), 3, counts);
+  sm.write_compacted_sequence(byte_seq, sequence.length(), 4, counts);
   //                                    minimizer position ^
 
   // Encode 8 overlapping 7-mers: TGGTACA, GGTACAA, GTACAAG, ...
-  sequence = "TGGTACAAGTTACC";
-  //              ^ minimizer (pos = 3)
+  sequence = "GGTACAAGTTACCT";
+  //             ^ minimizer (pos = 4)
   counts[0]=1; counts[1]=221; counts[2]=7; counts[3]=1;
   counts[4]=5; counts[5]=6; counts[6]=12; counts[7]=198;
   sm.write_compacted_sequence(byte_seq, sequence.length(), 3, counts);
