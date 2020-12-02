@@ -380,7 +380,7 @@ To write a block, you only need one more piece of information than for a row blo
 
   // Encode 8 overlapping 7-mers: TGGTACA, GGTACAA, GTACAAG, ...
   sequence = "GGTACAAGTTACCT";
-  //             ^ minimizer (pos = 4)
+  //             ^ minimizer (pos = 3)
   counts[0]=1; counts[1]=221; counts[2]=7; counts[3]=1;
   counts[4]=5; counts[5]=6; counts[6]=12; counts[7]=198;
   sm.write_compacted_sequence(byte_seq, sequence.length(), 3, counts);
