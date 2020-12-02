@@ -13,7 +13,7 @@ Also, the low level API does not guaranty the file integrity.
 It means that if you use the functions in the wrong order, you can write wrong kff files.
 
 
-# High level reader API
+# High level reader API
 
 ## Enumerating kmers
 
@@ -70,7 +70,7 @@ The *get_encoding* function return an array of the 4 encoded values in order A, 
 ```
 
 
-# Low level API
+# Low level API
 
 ## File reader
 
