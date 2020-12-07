@@ -4,6 +4,8 @@ This repository define a universal file format to store DNA kmers and their asso
 The associated data for a kmer can be everything if its size is constant from a kmer to another.
 For example, a count with a maximum of 255 can be store on a byte associated to each kmer.
 
+If you need io APIs or tools for kff format, please have a look at [kff organization repositories](https://github.com/Kmer-File-Format)
+
 
 # Overview
 
@@ -239,14 +241,3 @@ Same example translated as a minimizer sequence section:
   * 012f: block 3 - counters [1, 47]
 
 This small example have been reduced in size from 23 Bytes to 22 Bytes using minimizer blocks instead of raw blocks.
-
-## Section: sequences as context free grammar (not used yet)
-
-We would like to represent sequences as grammar to compact futher in some cases.
-This section is still under construction.
-
-
-# Implementations
-
-This repository contains some libraries that can be freely used to write and read kff files.
-For now, a low level C++ version is available inside of the C++ subdirectory.
