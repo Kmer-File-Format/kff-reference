@@ -145,14 +145,14 @@ The sequences are represented in a compacted way with 2 bits per nucleotide.
 Global variable requierment:
 * k: the kmer size for this section.
 * max: The maximum **number of kmer** per block.
-* data_size: The max size of a piece of data for one kmer.
+* data_size: The max size (in Bytes) of a piece of data for one kmer.
 Can be 0 for "no data".
 
 Section values:
 * type: char 'r' (1 Byte)
 * nb_blocks: The number blocks in this section (4 Bytes).
 * blocks: A list of blocks where each block is composed as follow:
-  * n: The number of kmers stored in the block. Must be <= max (lg(max) bits).
+  * n: The number of kmers stored in the block. Must be <= max, (field size: lg(max) bits).
 If max have been set to 1 in the header, this value is absent (save 1 Byte per block).
   * seq: The DNA sequence using 2 bits / nucleotide with respect to the encoding set in the header. It must be composed of n+k-1 characters.
   * data: An array of n\*data_size bits containing the data associated with each kmer (empty if data_size=0).
@@ -196,7 +196,7 @@ Global variable needed:
 * k: the kmer size for this section.
 * m: the minimizer size.
 * max: The maximum **number of kmer** per block.
-* data_size: The max size of a piece of data for one kmer.
+* data_size: The max size (in Bytes) of a piece of data for one kmer.
 Can be 0 for "no data".
 
 Section values:
@@ -204,7 +204,7 @@ Section values:
 * mini: The sequence of the minimizer 2 bits/char (lg(m) bits).
 * nb_blocks: The number blocks in this section (4 Bytes).
 * blocks: A list of blocks where each block is composed as follow:
-  * n: The number of kmers stored in the block. Must be <= max (lg(max) bits).
+  * n: The number of kmers stored in the block. Must be <= max, (field size: lg(max) bits).
 If max have been set to 1 in the header, this value is absent (save 1 Byte per block).
   * m_idx: The index of the minimizer in the sequence (lg(k+max-1) bits).
   * seq: The DNA sequence without the minimizer using 2 bits / nucleotide with respect to the encoding set in the header (with a padding to fill a Byte multiple). It must be composed of n+k-1-m characters (2\*(n+k-1-m) bits).
