@@ -32,25 +32,25 @@ In the diagrams below, we will use the following graphical elements:
      |   |   one byte  
      +---+
      
-     +--+---+
-     |      |  two bytes
-     +--+---+
+     +--+--+
+     |     |  two bytes
+     +--+--+
      
      +--+--+--+--+
      |           |  four bytes (etc..)
      +--+--+--+--+
      
      +==============+
-     |              |  variable number of bytes
+     |              |  a variable number of bytes
      +==============+
 
      +=====================+
-     | ascii(Hello wordl!) |  ascii representation of "Hello word!" plus a null character
+     | ascii(Hello world!) |  the ascii representation of a string (here, "Hello world!") plus a null character
      +=====================+
 
-     +============+
-     | 2bit(ACTG) |   the ACTG sequence in a 2 bit encoding, big endian byte order.
-     +============+
+     +=============+
+     | 2bit(ACCTG) |   a DNA sequence (here, ACCTG) in 2 bit encoding, big endian byte order.
+     +=============+
 ```
 
 # File header
