@@ -26,47 +26,47 @@ So, if a DNA sequence needs 12 bits to be represented, 16 will be used and the 4
 
 ## Convention
 
-In the diagrams below, a box like this:
+In the diagrams below, we will use the following graphical elements:
 ```
      +---+
-     |   | <-- the vertical bars might be missing
+     |   |   one byte  
      +---+
-```
-represents one byte; a box like this:
-```
-    +==============+
-    |              |
-    +==============+
-```
-represents a variable number of bytes.
+     
+     +--+--+
+     |     |  two bytes
+     +--+--+
+     
+     +--+--+--+--+
+     |           |  four bytes (etc..)
+     +--+--+--+--+
+     
+     +==============+
+     |              |  a variable number of bytes
+     +==============+
 
-A text like this:
-```
-ascii(Hello wordl!)
-```
-repersents the ascii value correspond to text "Hello word!" plus terminator caractere
+     +=====================+
+     | ascii(Hello world!) |  the ascii representation of a string (here, "Hello world!") plus a null character
+     +=====================+
 
-A text like this:
+     +=============+
+     | 2bit(ACCTG) |   a DNA sequence (here, ACCTG) in 2 bit encoding, big endian byte order.
+     +=============+
 ```
-2bit(ACTG)
-```
-repersents the sequence ACTG in 2 bit encoding describe in header. Big endian byte order.
 
 # File header
 
 The file header define values that are shared by the whole file regardless of the kmer set.
-Some values as k are not defined in the header but in the global number declaration sections.
-In that way, if multiple k values are used, the file can redefine it on the fly.
+Some variables, such as k, are not defined in the header but in a global declaration section.
+That way, if multiple k values are used, the file can redefine it on the fly.
 
 
-List of the values needed in the header:
-* version: the file format version x.y where x is the first byte y the second (2 Bytes)
-* encoding: ACGT encoding (2 bits/nucl - 1 Byte).
-For example the Byte 00101101 means that in the 2 bits encoding A=0, C=2, G=3, T=1.
-The 4 values need to be different.
-* free_size: The size of the next field in Bytes (4 Bytes)
+Header structure (required elements):
+* version: the file format version x.y where x is the first byte and y is the second bytes (2 bytes)
+* encoding: how A, C, G, and T are encoded (2 bits/nucl - 1 byte).
+For example encoding=00101101 means that A=0, C=2, G=3, T=1. The 4 values need to be different.
+* free_size: The size of the next field in bytes (4 Bytes)
 * free_block: A field for additional metadata. Only use it for basic metadata and user comments.
-If you need more section types, please contact us to extend the file format in a parsable and consistent way.
+If you need more section types, please contact us to extend the file format (for a future version) in a parsable and consistent way.
 
 ```
 +---------------+---------------+----------+--+--+--+--+============+
@@ -106,10 +106,10 @@ The value to take into acount at a certain point of the file is the last value e
 
 Section values:
 * type: char 'v' (1 Byte)
-* nb_vars: The number of numbers declared in this section (8 Bytes).
+* nb_vars: The number of numbers declared in this section (8 bytes).
 * vars: A succession of nb_vars number composed as follow:
   * name: Plain text name ended with '\0' (variable size).
-  * value: 64 bits value (8 Bytes).
+  * value: 64 bits value (8 bytes).
 
 ```
 +-------+--+--+--+--+--+--+--+--+===========+--+--+--+--+--+--+--+--+===+============+--+--+--+--+--+--+--+--+
@@ -144,8 +144,8 @@ The sequences are represented in a compacted way with 2 bits per nucleotide.
 
 Global variable requierment:
 * k: the kmer size for this section.
-* max: The maximum **number of kmer** per block.
-* data_size: The max size (in Bytes) of a piece of data for one kmer.
+* max: The maximum **number of kmers** per block.
+* data_size: The max size (in bytes) of a piece of data for one kmer.
 Can be 0 for "no data".
 
 Section values:
@@ -240,4 +240,4 @@ Same example translated as a minimizer sequence section:
   * 2bit(CTT): block 3 - blocks sequence without minimizer
   * 012f: block 3 - counters [1, 47]
 
-This small example have been reduced in size from 23 Bytes to 22 Bytes using minimizer blocks instead of raw blocks.
+This small example have been reduced in size from 23 bytes to 22 bytes using minimizer blocks instead of raw blocks.
