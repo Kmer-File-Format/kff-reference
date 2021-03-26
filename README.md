@@ -56,18 +56,18 @@ In the diagrams below, we will use the following graphical elements:
      +=============+
 ```
 
-# File header
+# Header
 
-The file header define values that are shared by the whole file regardless of the kmer set.
-Some variables, such as k, are not defined in the header but in a global declaration section.
-That way, if multiple k values are used, the file can redefine it on the fly.
+The file header defines values that are valid for the whole file.
+Some variables, such as k, are not defined in the header but in a section (called 'global variables declarationss').
+That way, if multiple k values are used, the file can redefine k on the fly between sections.
 
 
 Header structure (required elements):
-* version: the file format version x.y where x is the first byte and y is the second bytes (2 bytes)
-* encoding: how A, C, G, and T are encoded (2 bits/nucl - 1 byte).
+* version: the file format version x.y where x is the first byte and y is the second byte (total: 2 bytes)
+* encoding: how A, C, G, and T are encoded (total: 2 bits/nucl - 1 byte).
 For example encoding=00101101 means that A=0, C=2, G=3, T=1. The 4 values need to be different.
-* free_size: The size of the next field in bytes (4 Bytes)
+* free_size: The size of the next field in bytes (total: 4 bytes)
 * free_block: A field for additional metadata. Only use it for basic metadata and user comments.
 If you need more section types, please contact us to extend the file format (for a future version) in a parsable and consistent way.
 
@@ -93,21 +93,20 @@ Example:
 
 The main part of the file is a succession of sections.
 These sections can be of different types.
-The most important two are the global declaration of variables and the raw data sections.
+The most important two are the 'global variables declarations' and the 'raw data' sections.
 Other sections are used in particular contexts to store sequences more efficiently than raw data sections.
 
-The first Byte of each section define its type.
+The first byte of each section defines its type.
 
-## Section: global variable declaration
+## Section: global variables declarations
 
-This kind of section can be seen as a zone of global scope variable definition.
+This type of section can be seen as a zone of global-scope variables definitions.
 The other sections need the definition of some variables (the k value for example).
-A list of needed values for other sections is given in their documentation.
-The variables are pairs of name/value where names are ascii texts ended with a '\0' character and values are 64 bits fields.
-A varible can be define a multiple time accros the file.
-The value to take into acount at a certain point of the file is the last value encountered.
+A list of needed values for other sections is given in this specification.
+Each variable is a (name,value) pair where a name is a ASCII text ending with a '\0' character, and a value is a 64 bits field.
+A variable can be redefined within the same file. Its value will then be the last one encountered.
 
-Section values:
+Section contents:
 * type: char 'v' (1 Byte)
 * nb_vars: The number of numbers declared in this section (8 bytes).
 * vars: A succession of nb_vars number composed as follow:
@@ -145,13 +144,13 @@ The data linked to S is of size data_size * n.
 We call each of these pairs a block.
 The sequences are represented in a compacted way with 2 bits per nucleotide.
 
-Global variable requierment:
+Global variables requierment:
 * k: the kmer size for this section.
 * max: The maximum **number of kmers** per block.
 * data_size: The max size (in bytes) of a piece of data for one kmer.
 Can be 0 for "no data".
 
-Section values:
+Section contents:
 * type: char 'r' (1 Byte)
 * nb_blocks: The number blocks in this section (4 Bytes).
 * blocks: A list of blocks where each block is composed as follow:
@@ -195,14 +194,14 @@ In this file format, in the case where you know sets of sequences that share thi
 The common minimizer is stored at the beginning of the section and deleted in the sequences.
 A index is joined to the sequences to recall the minimize position and be able to reconstruct all the kmers.
 
-Global variable needed:
+Global variables needed:
 * k: the kmer size for this section.
 * m: the minimizer size.
 * max: The maximum **number of kmer** per block.
 * data_size: The max size (in Bytes) of a piece of data for one kmer.
 Can be 0 for "no data".
 
-Section values:
+Section contents:
 * type: char 'm' (1 Byte)
 * mini: The sequence of the minimizer 2 bits/char (lg(m) bits).
 * nb_blocks: The number blocks in this section (4 Bytes).
