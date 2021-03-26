@@ -1,27 +1,30 @@
 # KFF 1 - Kmer File Format v1
 
-This repository define a universal file format to store DNA kmers and their associated data.
-The associated data for a kmer can be everything if its size is constant from a kmer to another.
-For example, a count with a maximum of 255 can be store on a byte associated to each kmer.
+This repository defines a universal file format to store DNA kmers and their associated data.
+The associated data for a kmer can be anything as long as the size is constant across kmers.
+For example, an integer count between 0 and 255 can be stored in a byte associated to each kmer.
 
-If you need io APIs or tools for kff format, please have a look at [kff organization repositories](https://github.com/Kmer-File-Format)
+For I/O APIs and tools, please have a look at the [KFF organization repositories](https://github.com/Kmer-File-Format)
 
 
 # Overview
 
-The file is composed of two parts:
-* **A header**: It describes the different constant values.
-For example, it contains the file format version of the nucletide encoding.
-* **A content part**: It is composed of a list of sections.
-As described in the following parts, there are multiple type of sections and most of them are representing sequences in different ways.
-Each representation have compaction advantages.
-Overlapping kmers are represented as compacted sequences to save space.
-For example with k=3, a sequence ACTTG will represent the set of kmer {ACT, CTT, TTG}.
+A KFF file is composed of two parts:
+* **Header**: defines some constants.
+ 
+For example, it contains the file format version and the binary encoding of nucleotides.
 
-## Byte multiple
+* **List of sections**
 
-To be fast to read and write, all the values are stored on multiple of 8 bits to match a Byte.
-So, if a DNA sequence needs 12 bits to be represented, 16 will be used and the 4 most significant bits will be set randomly.
+As described in the following parts, there are multiple types of sections and most of them are representing sequences in different ways.
+Each representation has its own set of advantages.
+For instance, overlapping kmers can be represented as sequences to save space.
+For example with k=3, a sequence ACTTG will represent the set of kmers {ACT, CTT, TTG}.
+
+## Byte alignment
+
+For faster processing, all values are stored on multiples of 8 bits to match a byte.
+So, if a DNA sequence needs 12 bits to be represented, 16 bits will be used and the 4 most significant bits can be set arbitrarily.
 
 
 ## Convention
