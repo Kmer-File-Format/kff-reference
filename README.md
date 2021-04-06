@@ -80,7 +80,7 @@ If you need more section types, please contact us to extend the file format (for
 Example:
 ```
 +----+----+----+--+--+--+--+=====================+
-| 02 | 04 | 2d | 0000000c  | ascii(Hello wordl!) |
+| 02 | 04 | 2d | 0000000c  | ascii(Hello world!) |
 +----+----+----+--+--+--+--+=====================+
 ```
 
