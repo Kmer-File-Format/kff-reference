@@ -9,7 +9,8 @@ For I/O APIs and tools, please have a look at the [KFF organization repositories
 
 # Overview
 
-A KFF file is composed of two parts:
+A KFF file is composed of two parts (and 2 watermarks):
+* Watermark 1: 3 bytes "KFF" for file integrity checks.
 * **Header**: defines some constants.
  
 For example, it contains the file format version and the binary encoding of nucleotides.
@@ -21,10 +22,14 @@ Each representation has its own set of advantages.
 For instance, overlapping kmers can be represented as sequences to save space.
 For example with k=3, a sequence ACTTG will represent the set of kmers {ACT, CTT, TTG}.
 
+* Watermark 2: 3 bytes "KFF" for file integrity checks.
+
+
 ## Byte alignment
 
 For faster processing, all values are stored on multiples of 8 bits to match a byte.
 So, if a DNA sequence needs 12 bits to be represented, 16 bits will be used and the 4 most significant bits can be set arbitrarily.
+All the values (sequences and integers) are stored as big endian.
 
 
 ## Convention
@@ -59,14 +64,17 @@ In the diagrams below, we will use the following graphical elements:
 # Header
 
 The file header defines values that are valid for the whole file.
-Some variables, such as k, are not defined in the header but in a section (called 'global variables declarationss').
+Some variables, such as k, are not defined in the header but in a section (called 'global values declarations').
 That way, if multiple k values are used, the file can redefine k on the fly between sections.
 
 
 Header structure (required elements):
+* marker: The 3 letters "KFF" to know that we a reading a KFF file.
 * version: the file format version x.y where x is the first byte and y is the second byte (total: 2 bytes)
 * encoding: how A, C, G, and T are encoded (total: 2 bits/nucl - 1 byte).
 For example encoding=00101101 means that A=0, C=2, G=3, T=1. The 4 values need to be different.
+* unique kmers: A Byte set to 0 if you can encounter multiple time the same kmer, any other value if all the kmers are unique.
+* canonical kmers: A Byte set to 0 if you can encounter a kmer and its reverse complement in the same file, any other value if the file contains only one of the two.
 * free_size: The size of the next field in bytes (total: 4 bytes)
 * free_block: A field for additional metadata. Only use it for basic metadata and user comments.
 If you need more section types, please contact us to extend the file format (for a future version) in a parsable and consistent way.
@@ -80,7 +88,7 @@ If you need more section types, please contact us to extend the file format (for
 Example:
 ```
 +----+----+----+--+--+--+--+=====================+
-| 02 | 04 | 2d | 0000000c  | ascii(Hello world!) |
+| 02 | 04 | 2d | 0000000d  | ascii(Hello world!) |
 +----+----+----+--+--+--+--+=====================+
 ```
 
@@ -93,48 +101,48 @@ Example:
 
 The main part of the file is a succession of sections.
 These sections can be of different types.
-The most important two are the 'global variables declarations' and the 'raw data' sections.
-Other sections are used in particular contexts to store sequences more efficiently than raw data sections.
+The most important two are the 'values declarations' and the 'raw data' sections.
+Other sections are used in particular contexts to store sequences more efficiently than raw data sections or to augment the file with more information (like an index).
 
 The first byte of each section defines its type.
 
-## Section: global variables declarations
+## Section: value declarations
 
-This type of section can be seen as a zone of global-scope variables definitions.
+This type of section can be seen as a scope that ends with the next value section, where we define values.
 The other sections need the definition of some variables (the k value for example).
 A list of needed values for other sections is given in this specification.
-Each variable is a (name,value) pair where a name is a ASCII text ending with a '\0' character, and a value is a 64 bits field.
-A variable can be redefined within the same file. Its value will then be the last one encountered.
+Each value definition is a (name,value) pair where a name is a ASCII text ending with a '\0' character, and a value is a 64 bits field.
+After the end of the score, each value is reset to undefined.
 
 Section contents:
 * type: char 'v' (1 Byte)
-* nb_vars: The number of numbers declared in this section (8 bytes).
-* vars: A succession of nb_vars number composed as follow:
+* nb_vars: The number of values declared in this section (8 bytes).
+* vars: A succession of nb_vars pairs composed as follow:
   * name: Plain text name ended with '\0' (variable size).
   * value: 64 bits value (8 bytes).
 
 ```
-+-------+--+--+--+--+--+--+--+--+===========+--+--+--+--+--+--+--+--+===+============+--+--+--+--+--+--+--+--+
-| type  |         nb_vars       | name var1 |       value var1      | … | name var X |      value var X      |
-+-------+--+--+--+--+--+--+--+--+===========+--+--+--+--+--+--+--+--+===+============+--+--+--+--+--+--+--+--+
++-------+--+--+--+--+--+--+--+--+========+--+--+--+--+--+--+--+--+===+=========+--+--+--+--+--+--+--+--+
+| type  |         nb_vars       | name 1 |         value 1       | … | name X |         value X        |
++-------+--+--+--+--+--+--+--+--+========+--+--+--+--+--+--+--+--+===+=========+--+--+--+--+--+--+--+--+
 ```
 
 Example:
 
 ```
 +----------+--+--+--+--+--+--+--+--+==========+--+--+--+--+--+--+--+--+============+--+--+--+--+--+--+--+--+==================+--+--+--+--+--+--+--+--+
-| ascii(v) |             3         | ascii(k) |          A            | ascii(max) |           ff          | ascii(data_size) |             1         |
+| ascii(v) |            3          | ascii(k) |          A            | ascii(max) |           ff          | ascii(data_size) |             1         |
 +----------+--+--+--+--+--+--+--+--+==========+--+--+--+--+--+--+--+--+============+--+--+--+--+--+--+--+--+==================+--+--+--+--+--+--+--+--+
 ```
 
-* ascii(v) -> declare a globad variable section
-* 3 -> declare 3 variable
-  * ascii(k) -> name var 1
-  * 10 -> value of variable k
-  * ascii(max) -> name var2
-  * 255 -> value of variable max
-  * ascii(data_size) ->  name var3
-  * 1 -> value of variable data_size
+* ascii(v) -> declare a value section
+* 3 -> declare 3 values
+  * ascii(k) -> name 1
+  * 10 -> "k" value
+  * ascii(max) -> name 2
+  * 255 -> "max" value
+  * ascii(data_size) ->  name 3
+  * 1 -> "data_size" value
 
 ## Section: raw sequences
 
@@ -144,7 +152,7 @@ The data linked to S is of size data_size * n.
 We call each of these pairs a block.
 The sequences are represented in a compacted way with 2 bits per nucleotide.
 
-Global variables requierment:
+Values requirement:
 * k: the kmer size for this section.
 * max: The maximum **number of kmers** per block.
 * data_size: The max size (in bytes) of a piece of data for one kmer.
@@ -152,7 +160,7 @@ Can be 0 for "no data".
 
 Section contents:
 * type: char 'r' (1 Byte)
-* nb_blocks: The number blocks in this section (4 Bytes).
+* nb_blocks: The number blocks in this section (8 Bytes).
 * blocks: A list of blocks where each block is composed as follow:
   * n: The number of kmers stored in the block. Must be <= max, (field size: lg(max) bits).
 If max have been set to 1 in the header, this value is absent (save 1 Byte per block).
@@ -168,9 +176,9 @@ CTAAACTGATT [1, 47]      : sequence translation 0b1001000000100111000101 or 0x24
 
 Same example translated as a raw sequence section:
 ```
-+----------+--+--+--+--+---+===+====================+========+---+====================+====+---+===================+===========+
-| ascii(r) |      3        | 3 | 2bit(ACTAAACTGATT) | 202f01 | 1 | 2bit(AAACTGATCG)   | 0c | 2 | 2bit(CTAAACTGATT) |    012f   |
-+----------+--+--+--+--+---+===+====================+========+---+====================+====+---+===================+===========+
++----------+--+--+--+--+--+--+--+--+---+===+====================+========+---+====================+====+---+===================+===========+
+| ascii(r) |            3              | 3 | 2bit(ACTAAACTGATT) | 202f01 | 1 | 2bit(AAACTGATCG)   | 0c | 2 | 2bit(CTAAACTGATT) |    012f   |
++----------+--+--+--+--+--+--+--+--+---+===+====================+========+---+====================+====+---+===================+===========+
 ```
 
 * ascii(r) -> declare a raw sequences section
@@ -194,7 +202,7 @@ In this file format, in the case where you know sets of sequences that share thi
 The common minimizer is stored at the beginning of the section and deleted in the sequences.
 A index is joined to the sequences to recall the minimize position and be able to reconstruct all the kmers.
 
-Global variables needed:
+Values needed:
 * k: the kmer size for this section.
 * m: the minimizer size.
 * max: The maximum **number of kmer** per block.
@@ -204,7 +212,7 @@ Can be 0 for "no data".
 Section contents:
 * type: char 'm' (1 Byte)
 * mini: The sequence of the minimizer 2 bits/char (lg(m) bits).
-* nb_blocks: The number blocks in this section (4 Bytes).
+* nb_blocks: The number blocks in this section (8 Bytes).
 * blocks: A list of blocks where each block is composed as follow:
   * n: The number of kmers stored in the block. Must be <= max, (field size: lg(max) bits).
 If max have been set to 1 in the header, this value is absent (save 1 Byte per block).
@@ -221,9 +229,9 @@ CTAAACTGATT [1, 47]      : sequence translation 0b1001000000100111000101 or 0x24
 
 Same example translated as a minimizer sequence section:
 ```
-+----------+================+--+--+--+--+--+===+===+============+========+===+===+==========+====+===+===+===========+======+
-| ascii(m) | 2bit(AAACTGAT) |       3      | 3 | 3 | 2bit(ACTT) | 202f01 | 1 | 0 | 2bit(CG) | 0c | 2 | 2 | 2bit(CTT) | 012f |
-+----------+================+--+--+--+--+--+===+===+============+========+===+===+==========+====+===+===+===========+======+
++----------+================+--+--+--+--+--+--+--+--+--+===+===+============+========+===+===+==========+====+===+===+===========+======+
+| ascii(m) | 2bit(AAACTGAT) |             3            | 3 | 3 | 2bit(ACTT) | 202f01 | 1 | 0 | 2bit(CG) | 0c | 2 | 2 | 2bit(CTT) | 012f |
++----------+================+--+--+--+--+--+--+--+--+--+===+===+============+========+===+===+==========+====+===+===+===========+======+
 ```
 
 * ascii(m) -> declare a minimizer section
@@ -243,3 +251,61 @@ Same example translated as a minimizer sequence section:
   * 012f: block 3 - counters [1, 47]
 
 This small example have been reduced in size from 23 bytes to 22 bytes using minimizer blocks instead of raw blocks.
+
+
+
+## Section: index
+
+An index section will remind the relative positions of a certain amount of other sections.
+The index also keep as last value, the position of the next index section (0 if last).
+A file is called indexed when each section position is present in one index section.
+Because of the index pointer to the next index, the full index of a file can be distributed along the file.
+
+Values needed: None.
+
+Section contents:
+* type: char 'i' (1 Byte)
+* nb_sections: The number of section indexed (8 Bytes).
+* index_pairs: A list of nb_sections pairs (section, position):
+  * section: The type of section (1 Byte).
+  * position: Relative position to the end of this index section (8 Bytes). The value 0 means that the section starts at the first byte after the current one. Position values can be negative.
+* next_index: Relative position of the next index section (8 Bytes). Cannot be the following byte. Here 0 means "no following index section".
+
+Example:
+```
++----------+--+--+--+--+--+--+--+--+----------+--+--+--+--+--+--+--+--+----------+--+--+--+--+--+--+--+--+----------+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+| ascii(i) |           3           | ascii(v) |           0           | ascii(m) |          243          | ascii(r) |         -1463         |          3265         |
++----------+--+--+--+--+--+--+--+--+----------+--+--+--+--+--+--+--+--+----------+--+--+--+--+--+--+--+--+----------+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+```
+
+* ascii(i) -> declare an index section
+* 3 sections indexed:
+  * ascii(v): index 1: Value section
+  * 0:        index 1: The section starts 0 byte after the end of the index.
+  * ascii(m): index 2: Minimizer section
+  * 243:      index 2: The section starts 243 byte after the end of the index.
+  * ascii(r): index 3: Raw sequence section
+  * -1463:    index 3: The section starts 1463 byte BEFORE the end of the index (-1 is the last byte of this section).
+* 3265: Relative position of the next index block.
+
+
+# Good practices
+
+Here we introduce good practices that are recommended but not mandatory.
+
+## Footer
+
+When we are looking for kmer sets, we often need some global statistics and we would like to have them without parsing a whole KFF file.
+For example, we can need the number of distinct kmer inside of the file.
+We recommend to add such statistics in a footer 'v' section.
+To know where this footer starts, the last value must be "footer_size" and its corresponding value.
+
+To read the statistics, go to 23 Bytes before the end of the file [3 (watermark) + 8 (value size) + 12 (footer_size string size)].
+Then read the 12 bytes name of the value and if it corresponds to "footer_size", read the 8 bytes following value.
+Finally go back of this value + 3 (watermark) from the end of the file.
+You can now read the footer.
+
+## First index block
+
+If your KFF file is fully index a good practice is to have the first section of the file that is a index section.
+If it is not possible or not practical in your case, you also can indicate its position in the file declaring a value "first_index" in a footer.
