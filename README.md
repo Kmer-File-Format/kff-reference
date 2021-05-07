@@ -9,8 +9,8 @@ For I/O APIs and tools, please have a look at the [KFF organization repositories
 
 # Overview
 
-A KFF file is composed of two parts (and 2 watermarks):
-* Watermark 1: 3 bytes "KFF" for file integrity checks.
+A KFF file is composed of two parts (and 2 signatures):
+* signature 1: 3 bytes "KFF" for file integrity checks.
 * **Header**: defines some constants.
  
 For example, it contains the file format version and the binary encoding of nucleotides.
@@ -22,7 +22,7 @@ Each representation has its own set of advantages.
 For instance, overlapping kmers can be represented as sequences to save space.
 For example with k=3, a sequence ACTTG will represent the set of kmers {ACT, CTT, TTG}.
 
-* Watermark 2: 3 bytes "KFF" for file integrity checks.
+* signature 2: 3 bytes "KFF" for file integrity checks.
 
 
 ## Byte alignment
@@ -300,9 +300,9 @@ For example, we can need the number of distinct kmer inside of the file.
 We recommend to add such statistics in a footer 'v' section.
 To know where this footer starts, the last value must be "footer_size" and its corresponding value.
 
-To read the statistics, go to 23 Bytes before the end of the file [3 (watermark) + 8 (value size) + 12 (footer_size string size)].
+To read the statistics, go to 23 Bytes before the end of the file [3 (signature) + 8 (value size) + 12 (footer_size string size)].
 Then read the 12 bytes name of the value and if it corresponds to "footer_size", read the 8 bytes following value.
-Finally go back of this value + 3 (watermark) from the end of the file.
+Finally go back of this value + 3 (signature) from the end of the file.
 You can now read the footer.
 
 ## First index block
