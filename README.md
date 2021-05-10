@@ -80,22 +80,22 @@ For example encoding=00101101 means that A=0, C=2, G=3, T=1. The 4 values need t
 If you need more section types, please contact us to extend the file format (for a future version) in a parsable and consistent way.
 
 ```
-+---------------+---------------+----------+---+---+--+--+--+--+============+
-| Major version | Minor version | Encoding | U | C | Free size | Free block |
-+---------------+---------------+----------+---+---+--+--+--+--+============+
++--------+---------------+---------------+----------+---+---+--+--+--+--+============+
+| Marker | Major version | Minor version | Encoding | U | C | Free size | Free block |
++--------+---------------+---------------+----------+---+---+--+--+--+--+============+
 ```
 
 Example:
 ```
-+----+----+----+---+---+--+--+--+--+=====================+
-| 02 | 04 | 2d | 1 | 1 | 0000000d  | ascii(Hello world!) |
-+----+----+----+---+---+--+--+--+--+=====================+
++------------+----+----+----+---+---+--+--+--+--+=====================+
+| ascii(KFF) | 02 | 04 | 2d | 1 | 1 | 0000000d  | ascii(Hello world!) |
++------------+----+----+----+---+---+--+--+--+--+=====================+
 ```
 
 * Version number is 2.4
 * Encoding 0x2d == 0b00101101, so A=0, C=2, G=3, T=1
 * 12 Bytes in the free section
-* ascii -> "Hello world!"
+* Free section consists of "Hello world!"
 
 # Sections
 
