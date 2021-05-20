@@ -111,7 +111,7 @@ The first byte of each section defines its type.
 A 'v' section can be seen as a scope where a set of values are defined. 
 The scope ends as soon as we encounter another 'v' section. This means that all values defined in a scope are valid for that scope only.
 
-The rationale for 'v' section is to definition some variables that will apply to the sequence sections (the value of k for example).
+The rationale for 'v' section is to define some variables that will apply to the following sequence sections (the value of k for example).
 In fact, some variables will be required to be defined. Those requirements will be explained later in this specification (in the 'values requirement' parts of the sequence sections 'r' and 'm').
 Each value declaration is a (name,value) pair where a name is a ASCII text ending with a '\0' character, and a value is a 64 bits field.
 After the end of the scope, each value is reset to undefined.
