@@ -106,13 +106,13 @@ Other sections are used in particular contexts to store sequences more efficient
 
 The first byte of each section defines its type.
 
-## Section: values declarations
+## Section: values declarations ('v')
 
-This type of section ('v') can be seen as a scope where a set of values are defined. 
+A 'v' section can be seen as a scope where a set of values are defined. 
 The scope ends as soon as we encounter another 'v' section. This means that all values defined in a scope are valid for that scope only.
 
-The rationale is that other sections will require the definition of some variables (the value of k for example).
-Those requirements will be explained later in this specification (in the 'values requirement' parts).
+The rationale for 'v' section is to definition some variables that will apply to the sequence sections (the value of k for example).
+In fact, some variables will be required to be defined. Those requirements will be explained later in this specification (in the 'values requirement' parts of the sequence sections 'r' and 'm').
 Each value declaration is a (name,value) pair where a name is a ASCII text ending with a '\0' character, and a value is a 64 bits field.
 After the end of the scope, each value is reset to undefined.
 
@@ -146,7 +146,7 @@ Example:
   * ascii(data_size) ->  name 3
   * 1 -> "data_size" value
 
-## Section: raw sequences
+## Section: raw sequences ('r')
 
 This section is composed of a list of sequence/data pairs.
 A sequence S of size s represents a list of n kmers where n=s-k+1.
@@ -197,7 +197,7 @@ Same example translated as a raw sequence section:
   * 012f: block 3 - counters [1, 47]
 
 
-## Section: sequences with minimizers
+## Section: sequences with minimizers ('m')
 
 In many applications, kmers are bins using minimizer technics.
 It means that a succession of kmers or superkmers share a common substring.
