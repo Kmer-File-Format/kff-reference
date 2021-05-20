@@ -64,7 +64,7 @@ In the diagrams below, we will use the following graphical elements:
 # Header
 
 The file header defines values that are valid for the whole file.
-Some variables, such as k, are not defined in the header but in a section (called 'global values declarations').
+Some variables, such as k, are not defined in the header but in a section (called 'values declarations').
 That way, if multiple k values are used, the file can redefine k on the fly between sections.
 
 
@@ -73,8 +73,8 @@ Header structure (required elements):
 * version: the file format version x.y where x is the first byte and y is the second byte (total: 2 bytes)
 * encoding: how A, C, G, and T are encoded (total: 2 bits/nucl - 1 byte).
 For example encoding=00101101 means that A=0, C=2, G=3, T=1. The 4 values need to be different.
-* unique kmers: A Byte set to 0 if you can encounter multiple time the same kmer, any other value if all the kmers are unique.
-* canonical kmers: A Byte set to 0 if you can encounter a kmer and its reverse complement in the same file, any other value if the file contains only one of the two.
+* unique kmers: A Byte set to 0 if you can encounter multiple time the same kmer, 1 if all the kmers are unique.
+* canonical kmers: A Byte set to 0 if you can encounter a kmer and its reverse complement in the same file, 1 if the file contains only one of the two.
 * free_size: The size of the next field in bytes (total: 4 bytes)
 * free_block: A field for additional metadata. Only use it for basic metadata and user comments.
 If you need more section types, please contact us to extend the file format (for a future version) in a parsable and consistent way.
@@ -106,13 +106,15 @@ Other sections are used in particular contexts to store sequences more efficient
 
 The first byte of each section defines its type.
 
-## Section: value declarations
+## Section: values declarations
 
-This type of section can be seen as a scope that ends with the next value section, where we define values.
-The other sections need the definition of some variables (the k value for example).
-A list of needed values for other sections is given in this specification.
-Each value definition is a (name,value) pair where a name is a ASCII text ending with a '\0' character, and a value is a 64 bits field.
-After the end of the score, each value is reset to undefined.
+This type of section ('v') can be seen as a scope where a set of values are defined. 
+The scope ends as soon as we encounter another 'v' section. This means that all values defined in a scope are valid for that scope only.
+
+The rationale is that other sections will require the definition of some variables (the value of k for example).
+Those requirements will be explained later in this specification (in the 'values requirement' parts).
+Each value declaration is a (name,value) pair where a name is a ASCII text ending with a '\0' character, and a value is a 64 bits field.
+After the end of the scope, each value is reset to undefined.
 
 Section contents:
 * type: char 'v' (1 Byte)
@@ -154,6 +156,7 @@ The sequences are represented in a compacted way with 2 bits per nucleotide.
 
 Values requirement:
 * k: the kmer size for this section.
+* ordered: whether the sequences are ordered lexicographically according to the header encoding.
 * max: The maximum **number of kmers** per block.
 * data_size: The max size (in bytes) of a piece of data for one kmer.
 Can be 0 for "no data".
@@ -205,6 +208,7 @@ A index is joined to the sequences to recall the minimize position and be able t
 Values needed:
 * k: the kmer size for this section.
 * m: the minimizer size.
+* ordered: whether the sequences are ordered lexicographically according to the header encoding.
 * max: The maximum **number of kmer** per block.
 * data_size: The max size (in Bytes) of a piece of data for one kmer.
 Can be 0 for "no data".
