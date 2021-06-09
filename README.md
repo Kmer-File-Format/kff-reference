@@ -312,4 +312,4 @@ You can now read the footer.
 ## First index block
 
 If your KFF file is fully index a good practice is to have the first section of the file that is a index section.
-If it is not possible or not practical in your case, you also can indicate its position in the file declaring a value "first_index" in a footer.
+If it is not possible or not practical in your case, you also can indicate its absolute position in the file declaring a value "first_index" in a footer.
