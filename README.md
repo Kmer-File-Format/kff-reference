@@ -260,8 +260,12 @@ This small example have been reduced in size from 23 bytes to 22 bytes using min
 
 ## Section: index
 
-An index section will remind the relative positions of a certain amount of other sections.
-The index also keep as last value, the position of the next index section (0 if last).
+Many application needs fast access to slices of files.
+The index section has been designed to store the start address of some/all section(s) in the file.
+Combined with a normalized footer (see Good practices section), random access to the sections are possible.
+An index section contains relative positions.
+The index can also be stored as a splited chained structure.
+So, as last value, the position of the next index section (0 if last).
 A file is called indexed when each section position is present in one index section.
 Because of the index pointer to the next index, the full index of a file can be distributed along the file.
 
