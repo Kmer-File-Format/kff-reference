@@ -260,14 +260,18 @@ This small example have been reduced in size from 23 bytes to 22 bytes using min
 
 ## Section: index
 
-Many application needs fast access to slices of files.
-The index section has been designed to store the start address of some/all section(s) in the file.
-Combined with a normalized footer (see Good practices section), random access to the sections is possible.
-An index section contains relative positions.
-The index can also be stored as a splitted chained structure.
-So, as last value, the position of the next index section (0 if last).
-A file is called indexed when each section position is present in one index section.
-Because of the index pointer to the next index, the full index of a file can be distributed along the file.
+Many applications need fast access to slices of files. 
+The index section is a collection of relative pointers to the sections of a file. 
+By reading first the index, one can directly jump to any section. 
+It is useful for e.g. reading the KFF file in parallel, or accessing a section corresponding to a certain minimizer. 
+The index section has been designed to store the start address of some or all the sections present in the file. 
+Combined with a normalized footer (see Good practices section), random access to the sections is possible. 
+Index sections can be chained: the last value of the I section is the position of the next index section (0 if last).
+
+A side note regarding fast extraction of k-mer data: the Index section does not provide fast random access at the level of k-mers, but only at the level of entire sections. 
+Yet, when k-mers are sorted within a section, then fast random access can be achieved by binary search (as done in KMC). 
+Supporting o(log(n)) random accesses k-mers is on our roadmap, but is not currently a feature of KFF.
+
 
 Values needed: None.
 
