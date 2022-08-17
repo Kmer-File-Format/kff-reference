@@ -12,7 +12,7 @@ For I/O APIs and tools, please have a look at the [KFF organization repositories
 A KFF file is composed of two parts (and 2 signatures):
 * signature 1: 3 bytes "KFF" for file integrity checks.
 * **Header**: defines some constants.
- 
+
 For example, it contains the file format version and the binary encoding of nucleotides.
 
 * **List of sections**
@@ -37,24 +37,28 @@ All the values (sequences and integers) are stored as big endian.
 In the diagrams below, we will use the following graphical elements:
 ```
      +---+
-     |   |   one byte  
+     |   |   one byte
      +---+
-     
+
      +--+--+
      |     |  two bytes
      +--+--+
-     
+
      +--+--+--+--+
      |           |  four bytes (etc..)
      +--+--+--+--+
-     
+
      +==============+
      |              |  a variable number of bytes
      +==============+
 
      +=====================+
-     | ascii(Hello world!) |  the ascii representation of a string (here, "Hello world!") plus a null character
+     | ascii(Hello world!) |  the ascii representation of a string (here, "Hello world!")
      +=====================+
+
+     +===============+
+     | c-string(KFF) |  the ascii representation of a string (here, "Hello world!") plus a null character
+     +===============+
 
      +=============+
      | 2bit(ACCTG) |   a DNA sequence (here, ACCTG) in 2 bit encoding, big endian byte order.
@@ -108,7 +112,7 @@ The first byte of each section defines its type.
 
 ## Section: values declarations ('v')
 
-A 'v' section can be seen as a scope where a set of values are defined. 
+A 'v' section can be seen as a scope where a set of values are defined.
 The scope ends as soon as we encounter another 'v' section. This means that all values defined in a scope are valid for that scope only.
 
 The rationale for 'v' section is to define some variables that will apply to the following sequence sections (the value of k for example).
@@ -132,9 +136,9 @@ Section contents:
 Example:
 
 ```
-+----------+--+--+--+--+--+--+--+--+==========+--+--+--+--+--+--+--+--+============+--+--+--+--+--+--+--+--+==================+--+--+--+--+--+--+--+--+
-| ascii(v) |            3          | ascii(k) |          A            | ascii(max) |           ff          | ascii(data_size) |             1         |
-+----------+--+--+--+--+--+--+--+--+==========+--+--+--+--+--+--+--+--+============+--+--+--+--+--+--+--+--+==================+--+--+--+--+--+--+--+--+
++----------+--+--+--+--+--+--+--+--+=============+--+--+--+--+--+--+--+--+===============+--+--+--+--+--+--+--+--+=====================+--+--+--+--+--+--+--+--+
+| ascii(v) |            3          | c-string(k) |          A            | c-string(max) |           ff          | c-string(data_size) |             1         |
++----------+--+--+--+--+--+--+--+--+=============+--+--+--+--+--+--+--+--+===============+--+--+--+--+--+--+--+--+=====================+--+--+--+--+--+--+--+--+
 ```
 
 * ascii(v) -> declare a value section
@@ -260,16 +264,16 @@ This small example have been reduced in size from 23 bytes to 22 bytes using min
 
 ## Section: index
 
-Many applications need fast access to slices of files. 
-The index section is a collection of relative pointers to the sections of a file. 
-By reading first the index, one can directly jump to any section. 
-It is useful for e.g. reading the KFF file in parallel, or accessing a section corresponding to a certain minimizer. 
-The index section has been designed to store the start address of some or all the sections present in the file. 
-Combined with a normalized footer (see Good practices section), random access to the sections is possible. 
+Many applications need fast access to slices of files.
+The index section is a collection of relative pointers to the sections of a file.
+By reading first the index, one can directly jump to any section.
+It is useful for e.g. reading the KFF file in parallel, or accessing a section corresponding to a certain minimizer.
+The index section has been designed to store the start address of some or all the sections present in the file.
+Combined with a normalized footer (see Good practices section), random access to the sections is possible.
 Index sections can be chained: the last value of the I section is the position of the next index section (0 if last).
 
-A side note regarding fast extraction of k-mer data: the Index section does not provide fast random access at the level of k-mers, but only at the level of entire sections. 
-Yet, when k-mers are sorted within a section, then fast random access can be achieved by binary search (as done in KMC). 
+A side note regarding fast extraction of k-mer data: the Index section does not provide fast random access at the level of k-mers, but only at the level of entire sections.
+Yet, when k-mers are sorted within a section, then fast random access can be achieved by binary search (as done in KMC).
 Supporting o(log(n)) random accesses k-mers is on our roadmap, but is not currently a feature of KFF.
 
 
